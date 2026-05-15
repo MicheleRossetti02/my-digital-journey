@@ -37,8 +37,7 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 export const loginFn = createServerFn({ method: "POST" })
-  .validator((data: unknown) => data as { password: string })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }: { data: { password: string } }) => {
     const password = getCFAdminPassword();
     if (!password) throw new Error("ADMIN_PASSWORD non configurata — aggiungila nelle env vars di Cloudflare");
     if (data.password !== password) throw new Error("Password errata");

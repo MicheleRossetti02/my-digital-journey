@@ -9,8 +9,7 @@ export const Route = createFileRoute("/admin/sections/$id")({
 
 const getSectionsFn = createServerFn({ method: "GET" }).handler(() => kvGetSections());
 const saveSectionsFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => d as Section[])
-  .handler(({ data }) => kvSetSections(data));
+  .handler(({ data }: { data: Section[] }) => kvSetSections(data));
 
 function SectionEditor() {
   const { id } = Route.useParams();

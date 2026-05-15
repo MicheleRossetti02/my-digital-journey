@@ -9,8 +9,7 @@ export const Route = createFileRoute("/admin/")({
 
 const getProfileFn = createServerFn({ method: "GET" }).handler(() => kvGetProfile());
 const saveProfileFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => d as SiteProfile)
-  .handler(({ data }) => kvSetProfile(data));
+  .handler(({ data }: { data: SiteProfile }) => kvSetProfile(data));
 
 function ProfileEditor() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);

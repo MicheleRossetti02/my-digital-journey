@@ -10,8 +10,7 @@ export const Route = createFileRoute("/admin/github")({
 
 const getProfileFn = createServerFn({ method: "GET" }).handler(() => kvGetProfile());
 const saveProfileFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => d as SiteProfile)
-  .handler(({ data }) => kvSetProfile(data));
+  .handler(({ data }: { data: SiteProfile }) => kvSetProfile(data));
 
 type GithubConfig = { username: string; pinned: string[]; max: number };
 
