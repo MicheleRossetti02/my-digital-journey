@@ -4,6 +4,7 @@
  * (injected into globalThis.__CF_ENV__ by server.ts).
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { getCFAdminPassword, getCFSessionSecret } from "@/lib/kv.server";
 
 const SESSION_COOKIE = "admin_session";
@@ -47,17 +48,12 @@ export const loginFn = createServerFn({ method: "POST" })
   });
 
 export const checkAuthFn = createServerFn({ method: "GET" }).handler(async () => {
-  // In Cloudflare Workers, we can read request headers via the Request object
-  // TanStack Start server functions have access to the request via globalThis.__request__
-  // which is set by the Nitro adapter. As fallback we check a query-param token.
   try {
-    const req = (globalThis as Record<string, unknown>).__CF_REQUEST__ as Request | undefined;
-    const cookieHeader = req?.headers.get("cookie") ?? "";
-    const cookies = parseCookies(cookieHeader);
-    const token = cookies[SESSION_COOKIE];
+    // getCookie() reads from the incoming browser request — works correctly in TanStack Start server fns
+    const token = getCookie(SESSION_COOKIE);
     if (!token) return { authed: false };
     const secret = getCFSessionSecret();
-    const value = await verify(token, secret);
+    const value = await verify(decodeURIComponent(token), secret);
     return { authed: value?.startsWith("admin:") ?? false };
   } catch {
     return { authed: false };

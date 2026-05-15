@@ -124,6 +124,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Prevent FOUC: apply dark class before first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try{
+    var t=localStorage.getItem('theme');
+    var prefer=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+    var theme=t||prefer;
+    if(theme==='dark') document.documentElement.classList.add('dark');
+  }catch(e){}
+})();`,
+          }}
+        />
       </head>
       <body>
         {children}
