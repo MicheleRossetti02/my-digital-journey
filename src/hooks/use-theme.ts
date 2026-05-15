@@ -45,12 +45,11 @@ export function useTheme() {
             `circle(${endRadius}px at ${x}px ${y}px)`,
           ],
         },
-        {
-          duration: 650,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-          pseudoElement:
-            next === "dark" ? "::view-transition-new(root)" : "::view-transition-new(root)",
-        },
+      {
+        duration: 650,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        pseudoElement: "::view-transition-new(root)",
+      },
       );
     });
   };

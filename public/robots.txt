@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+
+Sitemap: https://id-preview--1e815403-f8b8-404d-952c-9838f3b69311.lovable.app/sitemap.xml

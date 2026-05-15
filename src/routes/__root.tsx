@@ -86,6 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Digital Transformation student, full-stack developer, and global mindset — based in Rome, open to relocate.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Michele Rossetti" },
       { name: "twitter:card", content: "summary" },
     ],
     links: [
@@ -95,6 +96,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: "Michele Rossetti",
+          jobTitle: "Digital Transformation Student",
+          email: "michelerossetti07@gmail.com",
+          address: { "@type": "PostalAddress", addressLocality: "Rome", addressCountry: "IT" },
+          sameAs: ["https://www.linkedin.com/in/michele-rossetti-298561263/"],
+        }),
       },
     ],
   }),

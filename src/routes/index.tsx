@@ -1,16 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useReveal } from "@/hooks/use-reveal";
 import { useTyping } from "@/hooks/use-typing";
 import { useTheme } from "@/hooks/use-theme";
+import { useLanguage } from "@/hooks/use-language";
 import { GitHubProjects } from "@/components/github-projects";
+import { SkillsSection } from "@/components/skills-section";
+import { ContactForm } from "@/components/contact-form";
+import { getPublicSite, type PublicSection } from "@/lib/public-site.functions";
 import avatarUrl from "/avatar.jpg?url";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  loader: async () => {
+    try {
+      return await getPublicSite();
+    } catch (e) {
+      console.error("getPublicSite failed", e);
+      return { profile: null, sections: [] as PublicSection[] };
+    }
+  },
 });
 
-const EMAIL = "michelerossetti07@gmail.com";
+const EMAIL_FALLBACK = "michelerossetti07@gmail.com";
 const LINKEDIN = "https://www.linkedin.com/in/michele-rossetti-298561263/";
 const DOMAIN = "rossettimichele.com";
 
@@ -415,18 +427,34 @@ function ThemeToggle() {
 function Index() {
   useReveal();
 
-  const [lang, setLang] = useState<Lang>("en");
-  useEffect(() => {
-    const saved = (typeof window !== "undefined" && localStorage.getItem("lang")) as Lang | null;
-    if (saved === "en" || saved === "it") setLang(saved);
-  }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("lang", lang);
-    if (typeof document !== "undefined") document.documentElement.lang = lang;
-  }, [lang]);
+  const data = Route.useLoaderData();
+  const profile = data?.profile;
+  const dbSections = useMemo(() => {
+    const map = new Map<string, PublicSection>();
+    (data?.sections ?? []).forEach((s: PublicSection) => map.set(s.section_key, s));
+    return map;
+  }, [data]);
+
+  // section is visible unless DB explicitly has a row marked invisible
+  const isVisible = (key: string) => {
+    if (!data?.sections?.length) return true;
+    return dbSections.has(key);
+  };
+
+  const [lang, setLang] = useLanguage("en");
 
   const t = T[lang];
-  const typed = useTyping(t.hero.typing as unknown as string[]);
+  const dbTyping = lang === "it" ? profile?.typing_it : profile?.typing_en;
+  const typingSource =
+    dbTyping && dbTyping.length > 0 ? dbTyping : (t.hero.typing as unknown as string[]);
+  const typed = useTyping(typingSource);
+
+  const EMAIL = profile?.email || EMAIL_FALLBACK;
+  const AVATAR_SRC = profile?.avatar_url || avatarUrl;
+  const CV_HREF = profile?.cv_url || "/cv.pdf";
+  const NAME = profile?.name || "Michele Rossetti";
+  const HERO_BIO = (lang === "it" ? profile?.bio_it : profile?.bio_en) || t.hero.bio;
+  const skillsSectionDb = dbSections.get("skills");
 
   return (
     <main className="min-h-screen">
@@ -452,20 +480,20 @@ function Index() {
             <div className="reveal order-2 md:order-1">
               <span className="pill mb-6">{t.hero.location}</span>
               <h1 className="font-serif text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.02] tracking-tight">
-                Michele <br className="hidden md:block" />
-                <em className="text-[var(--accent-hue)]">Rossetti</em>.
+                {NAME.split(" ")[0]} <br className="hidden md:block" />
+                <em className="text-[var(--accent-hue)]">{NAME.split(" ").slice(1).join(" ") || NAME}</em>.
               </h1>
               <p className="mt-6 text-xl md:text-2xl text-muted-foreground min-h-[1.6em]">
                 <span className="caret">{typed}</span>
               </p>
               <p className="mt-8 max-w-xl text-base md:text-lg text-foreground/80 leading-relaxed">
-                {t.hero.bio}
+                {HERO_BIO}
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-3">
                 <a href="#projects" className="btn btn-primary">
                   {t.hero.viewProjects} <ArrowDown />
                 </a>
-                <a href="/cv.pdf" download="Michele-Rossetti-CV.pdf" className="btn btn-ghost">
+                <a href={CV_HREF} download={`${NAME.replace(/\s+/g, "-")}-CV.pdf`} className="btn btn-ghost">
                   <DownloadIcon /> {t.hero.downloadCV}
                 </a>
                 <a href={`mailto:${EMAIL}`} className="btn btn-ghost">
@@ -484,8 +512,8 @@ function Index() {
                 <div className="absolute -inset-3 rounded-full -z-10 blur-2xl opacity-60"
                   style={{ background: "var(--accent-soft)" }} aria-hidden />
                 <img
-                  src={avatarUrl}
-                  alt="Portrait of Michele Rossetti"
+                  src={AVATAR_SRC}
+                  alt={`Portrait of ${NAME}`}
                   width={224}
                   height={224}
                   className="w-36 h-36 md:w-56 md:h-56 rounded-full object-cover object-center border border-[var(--color-border)] shadow-[0_20px_60px_-20px_oklch(0.18_0.01_60/0.25)]"
@@ -497,6 +525,7 @@ function Index() {
       </header>
 
       {/* ===== ABOUT ===== */}
+      {isVisible("about") && (
       <section id="about" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
@@ -513,6 +542,7 @@ function Index() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== NOW ===== */}
       <section id="now" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
@@ -540,6 +570,7 @@ function Index() {
       </section>
 
       {/* ===== EDUCATION ===== */}
+      {isVisible("education") && (
       <section className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
@@ -558,8 +589,10 @@ function Index() {
           </ol>
         </div>
       </section>
+      )}
 
       {/* ===== EXPERIENCES ===== */}
+      {isVisible("experiences") && (
       <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
@@ -580,8 +613,10 @@ function Index() {
           </ol>
         </div>
       </section>
+      )}
 
       {/* ===== PROJECTS ===== */}
+      {isVisible("projects") && (
       <section id="projects" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 flex flex-wrap items-end justify-between gap-4">
@@ -632,10 +667,11 @@ function Index() {
           </div>
 
           <div className="reveal">
-            <GitHubProjects />
+            <GitHubProjects config={profile?.github_config} />
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== LOOKING FOR ===== */}
       <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
@@ -682,7 +718,10 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== SKILLS ===== */}
+      {/* ===== SKILLS (new no-bars design from DB) ===== */}
+      {skillsSectionDb && skillsSectionDb.items.length > 0 ? (
+        <SkillsSection section={skillsSectionDb} lang={lang} />
+      ) : (
       <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
@@ -700,17 +739,11 @@ function Index() {
             </div>
             <div className="reveal">
               <h3 className="font-semibold mb-5 text-foreground/70 text-sm uppercase tracking-wider">{t.skills.languages}</h3>
-              <div className="space-y-5">
+              <div className="space-y-3">
                 {LANGUAGES[lang].map((l) => (
-                  <div key={l.name}>
-                    <div className="flex justify-between mb-2 text-sm">
-                      <span className="font-medium">{l.name}</span>
-                      <span className="text-muted-foreground">{l.level}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-[var(--color-border)] overflow-hidden">
-                      <div className="h-full rounded-full bg-[var(--accent-hue)] transition-all duration-1000"
-                        style={{ width: `${l.value}%` }} />
-                    </div>
+                  <div key={l.name} className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
+                    <span className="font-medium">{l.name}</span>
+                    <span className="text-xs uppercase tracking-wider text-[var(--accent-hue)] font-medium">{l.level}</span>
                   </div>
                 ))}
               </div>
@@ -718,6 +751,7 @@ function Index() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== PASSIONS ===== */}
       <section className="py-24 border-t border-[var(--color-border)]">
@@ -775,6 +809,9 @@ function Index() {
                 className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-white/20 hover:border-white hover:bg-white/5 transition-colors">
                 <LinkedInIcon />
               </a>
+            </div>
+            <div className="mt-12">
+              <ContactForm lang={lang} />
             </div>
             <p className="mt-16 text-xs opacity-50">{DOMAIN} · {t.contact.footer}</p>
           </div>

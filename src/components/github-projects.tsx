@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchTopRepos, languageColors, type GitHubRepo } from "@/lib/github";
-
-const GITHUB_USERNAME = "michelerossetti"; // update if different
+import type { GithubConfig } from "@/lib/public-site.functions";
 
 function Star() {
   return (
@@ -71,64 +70,46 @@ function SkeletonCard() {
   );
 }
 
-const placeholderRepos: GitHubRepo[] = [
-  {
-    id: 1,
-    name: "personal-portfolio",
-    description: "Source code for this very portfolio — built with React, TanStack and a lot of espresso.",
-    html_url: `https://github.com/${GITHUB_USERNAME}`,
-    language: "TypeScript",
-    stargazers_count: 0,
-    forks_count: 0,
-    fork: false,
-    archived: false,
-    pushed_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: "boolean-fullstack-projects",
-    description: "Collection of full-stack web apps built during the Boolean Web Developer course.",
-    html_url: `https://github.com/${GITHUB_USERNAME}`,
-    language: "JavaScript",
-    stargazers_count: 0,
-    forks_count: 0,
-    fork: false,
-    archived: false,
-    pushed_at: new Date().toISOString(),
-  },
-];
+const DEFAULT_USERNAME = "MicheleRossetti02";
+const DEFAULT_MAX = 6;
 
-export function GitHubProjects() {
+export function GitHubProjects({ config }: { config?: GithubConfig | null }) {
+  const username = config?.username || DEFAULT_USERNAME;
+  const pinnedNames = config?.pinned ?? [];
+  const max = config?.max ?? DEFAULT_MAX;
+
   const [repos, setRepos] = useState<GitHubRepo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetchTopRepos(GITHUB_USERNAME, 6)
+    // Always fetch all repos (up to 100) so we can filter by pinned
+    fetchTopRepos(username, 100)
       .then((r) => {
-        if (alive) setRepos(r);
+        if (!alive) return;
+        if (pinnedNames.length > 0) {
+          // Return pinned repos in pinned order, skip any not found
+          const byName = new Map(r.map((repo) => [repo.name, repo]));
+          const ordered = pinnedNames
+            .map((name) => byName.get(name))
+            .filter((repo): repo is GitHubRepo => repo !== undefined);
+          setRepos(ordered);
+        } else {
+          // Default: top `max` by stars/activity (already sorted by fetchTopRepos)
+          setRepos(r.slice(0, max));
+        }
       })
       .catch((e: Error) => {
         if (alive) setError(e.message);
       });
-    return () => {
-      alive = false;
-    };
-  }, []);
+    return () => { alive = false; };
+  }, [username, JSON.stringify(pinnedNames), max]);
 
   if (error) {
     return (
-      <>
-        <p className="text-sm text-muted-foreground mb-6 italic">
-          Couldn't reach GitHub right now ({error}). Showing placeholder projects — username:{" "}
-          <code>{GITHUB_USERNAME}</code>.
-        </p>
-        <div className="grid gap-5 md:grid-cols-2">
-          {placeholderRepos.map((r) => (
-            <RepoCard key={r.id} repo={r} />
-          ))}
-        </div>
-      </>
+      <p className="text-sm text-muted-foreground italic">
+        Couldn't reach GitHub right now ({error}).
+      </p>
     );
   }
 
@@ -144,11 +125,9 @@ export function GitHubProjects() {
 
   if (repos.length === 0) {
     return (
-      <div className="grid gap-5 md:grid-cols-2">
-        {placeholderRepos.map((r) => (
-          <RepoCard key={r.id} repo={r} />
-        ))}
-      </div>
+      <p className="text-sm text-muted-foreground italic">
+        Nessun repository trovato per <code>{username}</code>.
+      </p>
     );
   }
 
