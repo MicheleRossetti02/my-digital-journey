@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { kvGetProfile, kvGetSections } from "@/lib/kv.server";
 
 export type GithubConfig = {
   username: string;
@@ -36,13 +36,11 @@ export type PublicSection = {
   body_it: string;
   body_en: string;
   position: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   items: Array<{
     id: string;
     position: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: Record<string, any>;
+    data: Record<string, unknown>;
   }>;
 };
 
@@ -53,72 +51,51 @@ export type PublicSiteData = {
 
 export const getPublicSite = createServerFn({ method: "GET" }).handler(
   async (): Promise<PublicSiteData> => {
-    const [{ data: profile }, { data: sections }, { data: items }] =
-      await Promise.all([
-        supabaseAdmin.from("site_profile").select("*").eq("id", 1).maybeSingle(),
-        supabaseAdmin
-          .from("sections")
-          .select("*")
-          .eq("visible", true)
-          .order("position", { ascending: true }),
-        supabaseAdmin
-          .from("section_items")
-          .select("*")
-          .eq("visible", true)
-          .order("position", { ascending: true }),
-      ]);
+    const [profile, sections] = await Promise.all([
+      kvGetProfile(),
+      kvGetSections(),
+    ]);
 
-    const sectionsList: PublicSection[] = (sections ?? []).map((s) => ({
-      id: s.id,
-      section_key: s.section_key,
-      section_type: s.section_type,
-      title_it: s.title_it ?? "",
-      title_en: s.title_en ?? "",
-      subtitle_it: s.subtitle_it ?? "",
-      subtitle_en: s.subtitle_en ?? "",
-      kicker_it: s.kicker_it ?? "",
-      kicker_en: s.kicker_en ?? "",
-      body_it: s.body_it ?? "",
-      body_en: s.body_en ?? "",
-      position: s.position,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      config: (s.config ?? {}) as Record<string, any>,
-      items: (items ?? [])
-        .filter((it) => it.section_id === s.id)
-        .map((it) => ({
-          id: it.id,
-          position: it.position,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data: (it.data ?? {}) as Record<string, any>,
-        })),
-    }));
+    const visibleSections: PublicSection[] = sections
+      .filter((s) => s.visible)
+      .sort((a, b) => a.position - b.position)
+      .map((s) => ({
+        id: s.id,
+        section_key: s.section_key,
+        section_type: s.section_type,
+        title_it: s.title_it,
+        title_en: s.title_en,
+        subtitle_it: s.subtitle_it,
+        subtitle_en: s.subtitle_en,
+        kicker_it: s.kicker_it,
+        kicker_en: s.kicker_en,
+        body_it: s.body_it,
+        body_en: s.body_en,
+        position: s.position,
+        config: s.config,
+        items: s.items
+          .filter((i) => i.visible)
+          .sort((a, b) => a.position - b.position)
+          .map((i) => ({ id: i.id, position: i.position, data: i.data })),
+      }));
 
     return {
-      profile: profile
-        ? {
-            name: profile.name,
-            email: profile.email,
-            location: profile.location,
-            avatar_url: profile.avatar_url,
-            cv_url: profile.cv_url,
-            bio_it: profile.bio_it ?? "",
-            bio_en: profile.bio_en ?? "",
-            tagline_it: profile.tagline_it ?? "",
-            tagline_en: profile.tagline_en ?? "",
-            typing_it: Array.isArray(profile.typing_it) ? (profile.typing_it as string[]) : [],
-            typing_en: Array.isArray(profile.typing_en) ? (profile.typing_en as string[]) : [],
-            links: Array.isArray(profile.links)
-              ? (profile.links as Array<{ label: string; url: string }>)
-              : [],
-            github_config:
-              profile.github_config &&
-              typeof profile.github_config === "object" &&
-              !Array.isArray(profile.github_config)
-                ? (profile.github_config as GithubConfig)
-                : null,
-          }
-        : null,
-      sections: sectionsList,
+      profile: {
+        name: profile.name,
+        email: profile.email,
+        location: profile.location,
+        avatar_url: profile.avatar_url,
+        cv_url: profile.cv_url,
+        bio_it: profile.bio_it,
+        bio_en: profile.bio_en,
+        tagline_it: profile.tagline_it,
+        tagline_en: profile.tagline_en,
+        typing_it: profile.typing_it,
+        typing_en: profile.typing_en,
+        links: profile.links,
+        github_config: profile.github_config,
+      },
+      sections: visibleSections,
     };
   },
 );

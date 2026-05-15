@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { checkAuthFn } from "@/lib/auth.server";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -14,32 +14,19 @@ function AdminLayout() {
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      if (!data.session) {
+    checkAuthFn().then(({ authed }) => {
+      if (!authed) {
         navigate({ to: "/login" });
-        return;
+      } else {
+        setAuthed(true);
+        setChecking(false);
       }
-      // verify admin
-      const { data: adminRow } = await supabase
-        .from("admins").select("user_id").eq("user_id", data.session.user.id).maybeSingle();
-      if (!adminRow) {
-        await supabase.auth.signOut();
-        navigate({ to: "/login" });
-        return;
-      }
-      setAuthed(true);
-      setChecking(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) navigate({ to: "/login" });
-    });
-    return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, [navigate]);
 
-  async function logout() {
-    await supabase.auth.signOut();
+  function logout() {
+    // Clear the session cookie
+    document.cookie = "admin_session=; Path=/; Max-Age=0";
     navigate({ to: "/login" });
   }
 

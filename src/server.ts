@@ -3,8 +3,15 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+type CFEnv = {
+  SITE_KV?: KVNamespace;
+  ADMIN_PASSWORD?: string;
+  SESSION_SECRET?: string;
+  [key: string]: unknown;
+};
+
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (request: Request, env: CFEnv, ctx: unknown) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -67,7 +74,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: CFEnv, ctx: unknown) {
+    // Inject Cloudflare bindings and request into globalThis so server functions can access them
+    (globalThis as Record<string, unknown>).__CF_ENV__ = env;
+    (globalThis as Record<string, unknown>).__CF_REQUEST__ = request;
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

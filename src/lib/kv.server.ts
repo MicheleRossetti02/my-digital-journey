@@ -1,0 +1,152 @@
+/**
+ * Cloudflare KV helper — reads SITE_KV from globalThis.__CF_ENV__
+ * which is injected by server.ts at request time.
+ */
+
+type CFEnv = {
+  SITE_KV?: KVNamespace;
+  ADMIN_PASSWORD?: string;
+  SESSION_SECRET?: string;
+};
+
+function getCFEnv(): CFEnv {
+  return ((globalThis as Record<string, unknown>).__CF_ENV__ as CFEnv) ?? {};
+}
+
+export function getKV(): KVNamespace | null {
+  return getCFEnv().SITE_KV ?? null;
+}
+
+export function getCFAdminPassword(): string {
+  return getCFEnv().ADMIN_PASSWORD ?? process.env.ADMIN_PASSWORD ?? "";
+}
+
+export function getCFSessionSecret(): string {
+  return getCFEnv().SESSION_SECRET ?? process.env.SESSION_SECRET ?? "dev-secret-change-me";
+}
+
+// ─── Default content (shown when KV is empty on first deploy) ───────────────
+
+export const DEFAULT_PROFILE = {
+  name: "Michele Rossetti",
+  email: "michelerossetti07@gmail.com",
+  location: "Rome, Italy · Open to relocate",
+  avatar_url: null as string | null,
+  cv_url: "/cv.pdf",
+  bio_en:
+    "Economics & Management graduate drawn to the space where technology meets strategy. Currently pursuing a Master's in Digital Transformation at LUISS Business School, Rome.",
+  bio_it:
+    "Laureato in Economia e Management, attratto dallo spazio in cui la tecnologia incontra la strategia. Attualmente Master in Digital Transformation alla LUISS Business School, Roma.",
+  tagline_en: "Digital Transformation · Innovation × Strategy",
+  tagline_it: "Digital Transformation · Innovazione × Strategia",
+  typing_en: [
+    "Digital Transformation Student",
+    "Innovation & Management",
+    "Tech × Business Enthusiast",
+    "Global Mindset",
+  ],
+  typing_it: [
+    "Studente di Digital Transformation",
+    "Innovazione & Management",
+    "Tech × Business",
+    "Mentalità globale",
+  ],
+  links: [
+    { label: "LinkedIn", url: "https://www.linkedin.com/in/michele-rossetti-298561263/" },
+    { label: "Email", url: "mailto:michelerossetti07@gmail.com" },
+  ],
+  github_config: {
+    username: "MicheleRossetti02",
+    pinned: [] as string[],
+    max: 6,
+  },
+};
+
+export type SiteProfile = typeof DEFAULT_PROFILE;
+
+export type SectionItem = {
+  id: string;
+  position: number;
+  visible: boolean;
+  data: Record<string, unknown>;
+};
+
+export type Section = {
+  id: string;
+  section_key: string;
+  section_type: string;
+  title_en: string;
+  title_it: string;
+  subtitle_en: string;
+  subtitle_it: string;
+  kicker_en: string;
+  kicker_it: string;
+  body_en: string;
+  body_it: string;
+  position: number;
+  visible: boolean;
+  config: Record<string, unknown>;
+  items: SectionItem[];
+};
+
+function mkSection(
+  key: string, type: string, position: number,
+  kickerEn: string, kickerIt: string, titleEn: string, titleIt: string,
+): Section {
+  return {
+    id: key, section_key: key, section_type: type,
+    title_en: titleEn, title_it: titleIt,
+    subtitle_en: "", subtitle_it: "",
+    kicker_en: kickerEn, kicker_it: kickerIt,
+    body_en: "", body_it: "",
+    position, visible: true, config: {}, items: [],
+  };
+}
+
+export const DEFAULT_SECTIONS: Section[] = [
+  mkSection("about", "about", 10, "About", "Chi sono", "A curious mind, in motion.", "Una mente curiosa, in movimento."),
+  mkSection("education", "education", 20, "Education", "Formazione", "An education without borders.", "Una formazione senza confini."),
+  mkSection("experiences", "experiences", 30, "Experiences", "Esperienze", "Beyond the classroom.", "Oltre l'aula."),
+  mkSection("skills", "skills", 40, "Skills", "Competenze", "Soft & hard skills.", "Soft & hard skills."),
+  mkSection("projects", "projects", 50, "Projects", "Progetti", "Things I've been building.", "Cose che ho costruito."),
+  mkSection("passions", "passions", 60, "Beyond the CV", "Oltre il CV", "What keeps me moving.", "Cosa mi tiene in movimento."),
+  mkSection("gallery", "gallery", 70, "Off-screen", "Off-screen", "Outside the laptop.", "Fuori dal laptop."),
+];
+
+// ─── KV read/write ────────────────────────────────────────────────────────────
+
+export async function kvGetProfile(): Promise<SiteProfile> {
+  const kv = getKV();
+  if (!kv) return DEFAULT_PROFILE;
+  try {
+    const raw = await kv.get("site:profile");
+    if (!raw) return DEFAULT_PROFILE;
+    return { ...DEFAULT_PROFILE, ...JSON.parse(raw) } as SiteProfile;
+  } catch {
+    return DEFAULT_PROFILE;
+  }
+}
+
+export async function kvSetProfile(profile: SiteProfile): Promise<void> {
+  const kv = getKV();
+  if (!kv) throw new Error("KV binding not available — add SITE_KV to wrangler.jsonc");
+  await kv.put("site:profile", JSON.stringify(profile));
+}
+
+export async function kvGetSections(): Promise<Section[]> {
+  const kv = getKV();
+  if (!kv) return DEFAULT_SECTIONS;
+  try {
+    const raw = await kv.get("site:sections");
+    if (!raw) return DEFAULT_SECTIONS;
+    return JSON.parse(raw) as Section[];
+  } catch {
+    return DEFAULT_SECTIONS;
+  }
+}
+
+export async function kvSetSections(sections: Section[]): Promise<void> {
+  const kv = getKV();
+  if (!kv) throw new Error("KV binding not available — add SITE_KV to wrangler.jsonc");
+  await kv.put("site:sections", JSON.stringify(sections));
+}

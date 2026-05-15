@@ -1,7 +1,15 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
-  "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "src/server.ts",
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tanstack-start-app",
+	"compatibility_date": "2025-09-24",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"main": "src/server.ts",
+	"kv_namespaces": [
+		{
+			"binding": "SITE_KV",
+			"id": "b1822dc1741045a4903c39717741af3b"
+		}
+	],
 }
