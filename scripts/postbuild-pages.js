@@ -51,11 +51,13 @@ export default workerEntry;
 writeFileSync(join(CLIENT_DIR, "_worker.js"), workerJs);
 console.log("✅ _worker.js written");
 
-// 4. Write _routes.json — send ALL requests to the Worker (not to static files)
+// 4. Write _routes.json
+// Static assets (/assets/*) are served directly by Pages from the bucket.
+// Only HTML routes go through the Worker for SSR.
 const routes = {
   version: 1,
   include: ["/*"],
-  exclude: [],
+  exclude: ["/assets/*"],
 };
 writeFileSync(join(CLIENT_DIR, "_routes.json"), JSON.stringify(routes, null, 2));
 console.log("✅ _routes.json written");
