@@ -21,6 +21,10 @@ export function getCFAdminPassword(): string {
   return getCFEnv().ADMIN_PASSWORD ?? process.env.ADMIN_PASSWORD ?? "";
 }
 
+export function getCFAdminEmail(): string {
+  return getCFEnv().ADMIN_EMAIL ?? process.env.ADMIN_EMAIL ?? "";
+}
+
 export function getCFSessionSecret(): string {
   return getCFEnv().SESSION_SECRET ?? process.env.SESSION_SECRET ?? "dev-secret-change-me";
 }

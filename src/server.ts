@@ -6,6 +6,7 @@ import { renderErrorPage } from "./lib/error-page";
 type CFEnv = {
   SITE_KV?: KVNamespace;
   ADMIN_PASSWORD?: string;
+  ADMIN_EMAIL?: string;
   SESSION_SECRET?: string;
   [key: string]: unknown;
 };

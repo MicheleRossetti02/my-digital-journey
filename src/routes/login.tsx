@@ -9,6 +9,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,12 +19,11 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const result = await loginFn({ data: { password } });
-      // Set the cookie in the browser
+      const result = await loginFn({ data: { email, password } });
       document.cookie = result.cookie;
       navigate({ to: "/admin" });
     } catch (err) {
-      setError((err as Error).message || "Password errata");
+      setError((err as Error).message || "Credenziali errate");
     }
     setLoading(false);
   }
@@ -36,10 +36,18 @@ function LoginPage() {
           <p className="mt-1 text-xs text-muted-foreground">Accedi per modificare il sito.</p>
         </div>
         <div className="space-y-2">
+          <label className="text-xs font-medium text-foreground">Email</label>
+          <input
+            type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+            autoFocus autoComplete="email"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="space-y-2">
           <label className="text-xs font-medium text-foreground">Password</label>
           <input
             type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            autoFocus
+            autoComplete="current-password"
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
         </div>

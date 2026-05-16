@@ -5,7 +5,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { getCFAdminPassword, getCFSessionSecret } from "@/lib/kv.server";
+import { getCFAdminPassword, getCFSessionSecret, getCFAdminEmail } from "@/lib/kv.server";
 
 const SESSION_COOKIE = "admin_session";
 
@@ -37,10 +37,12 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 export const loginFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { password: string } }) => {
-    const password = getCFAdminPassword();
-    if (!password) throw new Error("ADMIN_PASSWORD non configurata — aggiungila nelle env vars di Cloudflare");
-    if (data.password !== password) throw new Error("Password errata");
+  .handler(async ({ data }: { data: { email: string; password: string } }) => {
+    const adminEmail = getCFAdminEmail();
+    const adminPassword = getCFAdminPassword();
+    if (!adminPassword) throw new Error("ADMIN_PASSWORD non configurata");
+    if (adminEmail && data.email.toLowerCase() !== adminEmail.toLowerCase()) throw new Error("Email non riconosciuta");
+    if (data.password !== adminPassword) throw new Error("Password errata");
     const secret = getCFSessionSecret();
     const token = await sign(`admin:${Date.now()}`, secret);
     return { token, cookie: `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800` };
