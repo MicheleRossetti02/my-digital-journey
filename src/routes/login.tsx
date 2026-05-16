@@ -19,8 +19,8 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const result = await loginFn({ data: { email, password } });
-      document.cookie = result.cookie;
+      // Cookie is set server-side via Set-Cookie header — no document.cookie needed
+      await loginFn({ data: { email, password } });
       navigate({ to: "/admin" });
     } catch (err) {
       setError((err as Error).message || "Credenziali errate");

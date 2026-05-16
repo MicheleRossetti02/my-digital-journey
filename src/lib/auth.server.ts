@@ -4,7 +4,7 @@
  * (injected into globalThis.__CF_ENV__ by server.ts).
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
+import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { getCFAdminPassword, getCFSessionSecret, getCFAdminEmail } from "@/lib/kv.server";
 
 const SESSION_COOKIE = "admin_session";
@@ -45,7 +45,14 @@ export const loginFn = createServerFn({ method: "POST" })
     if (data.password !== adminPassword) throw new Error("Password errata");
     const secret = getCFSessionSecret();
     const token = await sign(`admin:${Date.now()}`, secret);
-    return { token, cookie: `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800` };
+    // Set cookie server-side via Set-Cookie header (HttpOnly cookies cannot be set via document.cookie)
+    setCookie(SESSION_COOKIE, encodeURIComponent(token), {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      maxAge: 604800,
+    });
+    return { ok: true };
   });
 
 export const checkAuthFn = createServerFn({ method: "GET" }).handler(async () => {
