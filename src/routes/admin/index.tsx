@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { kvGetProfile, kvSetProfile, type SiteProfile } from "@/lib/kv.server";
+import { FileUpload } from "@/components/file-upload";
 
 export const Route = createFileRoute("/admin/")({
   component: ProfileEditor,
@@ -50,19 +51,26 @@ function ProfileEditor() {
         <input className={inp} value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
       </Field>
 
-      <Field label="Avatar URL">
-        <div className="flex items-center gap-3">
-          {profile.avatar_url && <img src={profile.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />}
-          <input className={inp} value={profile.avatar_url ?? ""} placeholder="https://..." onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value || null })} />
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">Incolla URL pubblico di un'immagine (es. da Imgur, Cloudinary)</p>
+      <Field label="Avatar">
+        <FileUpload
+          type="image"
+          value={profile.avatar_url}
+          onChange={(url) => setProfile({ ...profile, avatar_url: url || null })}
+          accept="image/*"
+        />
+        <p className="text-xs text-muted-foreground mt-1">Oppure incolla un URL direttamente:</p>
+        <input className={inp} value={profile.avatar_url ?? ""} placeholder="https://..." onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value || null })} />
       </Field>
 
-      <Field label="CV URL">
-        <div className="flex items-center gap-3">
-          {profile.cv_url && <a href={profile.cv_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline shrink-0">CV attuale</a>}
-          <input className={inp} value={profile.cv_url ?? ""} placeholder="/cv.pdf o URL esterno" onChange={(e) => setProfile({ ...profile, cv_url: e.target.value || null })} />
-        </div>
+      <Field label="CV">
+        <FileUpload
+          type="file"
+          value={profile.cv_url}
+          onChange={(url) => setProfile({ ...profile, cv_url: url || null })}
+          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        />
+        <p className="text-xs text-muted-foreground mt-1">Oppure incolla un URL direttamente:</p>
+        <input className={inp} value={profile.cv_url ?? ""} placeholder="/cv.pdf o URL esterno" onChange={(e) => setProfile({ ...profile, cv_url: e.target.value || null })} />
       </Field>
 
       <div className="grid grid-cols-2 gap-4">

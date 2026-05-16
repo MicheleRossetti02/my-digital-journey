@@ -11,6 +11,52 @@ type CFEnv = {
   [key: string]: unknown;
 };
 
+/** Maximum upload size: 8 MB */
+const MAX_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Handle GET /api/file/:key — serves a file stored in KV.
+ */
+async function handleFileServe(key: string, kv: KVNamespace): Promise<Response> {
+  const record = await kv.get<{ mimeType: string; base64: string }>(`file:${key}`, { type: "json" });
+  if (!record) return new Response("Not found", { status: 404 });
+  const bytes = Uint8Array.from(atob(record.base64), (c) => c.charCodeAt(0));
+  return new Response(bytes, {
+    headers: {
+      "Content-Type": record.mimeType,
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
+
+/**
+ * Handle POST /api/upload — stores a file in KV and returns its URL.
+ * Expects multipart/form-data with a "file" field.
+ */
+async function handleFileUpload(request: Request, kv: KVNamespace): Promise<Response> {
+  // Auth check: must have admin_session cookie
+  const cookie = request.headers.get("cookie") ?? "";
+  if (!cookie.includes("admin_session=")) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const formData = await request.formData();
+  const file = formData.get("file") as File | null;
+  if (!file || typeof file === "string") {
+    return new Response("No file", { status: 400 });
+  }
+  if (file.size > MAX_BYTES) {
+    return new Response("File too large (max 8 MB)", { status: 413 });
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const key = `${Date.now()}-${safeName}`;
+  await kv.put(`file:${key}`, JSON.stringify({ mimeType: file.type || "application/octet-stream", base64 }));
+  return new Response(JSON.stringify({ url: `/api/file/${key}` }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 type ServerEntry = {
   fetch: (request: Request, env: CFEnv, ctx: unknown) => Promise<Response> | Response;
 };
@@ -79,6 +125,20 @@ export default {
     // Inject Cloudflare bindings and request into globalThis so server functions can access them
     (globalThis as Record<string, unknown>).__CF_ENV__ = env;
     (globalThis as Record<string, unknown>).__CF_REQUEST__ = request;
+
+    // --- File upload / serve shortcuts (handled before TanStack Start) ---
+    const url = new URL(request.url);
+    if (env.SITE_KV) {
+      if (request.method === "GET" && url.pathname.startsWith("/api/file/")) {
+        const key = decodeURIComponent(url.pathname.slice("/api/file/".length));
+        return handleFileServe(key, env.SITE_KV);
+      }
+      if (request.method === "POST" && url.pathname === "/api/upload") {
+        return handleFileUpload(request, env.SITE_KV);
+      }
+    }
+    // --- End file shortcuts ---
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

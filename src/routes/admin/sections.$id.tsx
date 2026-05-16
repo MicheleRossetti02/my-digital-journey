@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { kvGetSections, kvSetSections, type Section, type SectionItem } from "@/lib/kv.server";
+import { FileUpload } from "@/components/file-upload";
 
 export const Route = createFileRoute("/admin/sections/$id")({
   component: SectionEditor,
@@ -138,6 +139,9 @@ function SectionEditor() {
   );
 }
 
+/** Keys that represent image URLs and should show the FileUpload component */
+const IMAGE_KEYS = new Set(["image", "src", "photo", "avatar", "thumbnail", "cover"]);
+
 function ItemCard({ item, isFirst, isLast, onSave, onDelete, onMoveUp, onMoveDown }: {
   item: SectionItem; isFirst: boolean; isLast: boolean;
   onSave: (i: SectionItem) => void; onDelete: () => void;
@@ -169,12 +173,20 @@ function ItemCard({ item, isFirst, isLast, onSave, onDelete, onMoveUp, onMoveDow
       <div className="grid grid-cols-2 gap-2">
         {keys.map((k) => {
           const val = local.data[k];
+          const isImageField = IMAGE_KEYS.has(k);
           const isLong = typeof val === "string" && val.length > 60;
           const isArr = Array.isArray(val);
           return (
             <div key={k} className="space-y-1">
               <label className="text-[11px] font-mono text-muted-foreground">{k}</label>
-              {isArr ? (
+              {isImageField ? (
+                <FileUpload
+                  type="image"
+                  value={String(val ?? "")}
+                  onChange={(url) => setKey(k, url)}
+                  accept="image/*"
+                />
+              ) : isArr ? (
                 <input className={inp} value={(val as string[]).join(", ")} onChange={(e) => setKey(k, e.target.value.split(",").map((s) => s.trim()))} />
               ) : isLong ? (
                 <textarea rows={3} className={inp} value={String(val ?? "")} onChange={(e) => setKey(k, e.target.value)} />
