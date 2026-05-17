@@ -595,7 +595,7 @@ function Index() {
 
       {/* ===== EXPERIENCES ===== */}
       {isVisible("experiences") && (
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="experiences" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.experiences.kicker}</p>
@@ -619,7 +619,7 @@ function Index() {
 
       {/* ===== PROJECTS ===== */}
       {isVisible("projects") && (
-      <section id="projects" className="py-24 border-t border-[var(--color-border)]">
+      <section id="projects" data-section="projects" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -676,7 +676,7 @@ function Index() {
       )}
 
       {/* ===== LOOKING FOR ===== */}
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="looking" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.looking.kicker}</p>
@@ -701,7 +701,7 @@ function Index() {
       </section>
 
       {/* ===== READING ===== */}
-      <section className="py-24 border-t border-[var(--color-border)]">
+      <section data-section="reading" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.reading.kicker}</p>
@@ -724,7 +724,7 @@ function Index() {
       {skillsSectionDb && skillsSectionDb.items.length > 0 ? (
         <SkillsSection section={skillsSectionDb} lang={lang} />
       ) : (
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="skills" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.skills.kicker}</p>
@@ -756,7 +756,7 @@ function Index() {
       )}
 
       {/* ===== PASSIONS ===== */}
-      <section className="py-24 border-t border-[var(--color-border)]">
+      <section data-section="passions" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.passions.kicker}</p>
@@ -776,7 +776,7 @@ function Index() {
       </section>
 
       {/* ===== GALLERY ===== */}
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="gallery" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-10 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.gallery.kicker}</p>
@@ -795,7 +795,7 @@ function Index() {
       </section>
 
       {/* ===== CONTACT / FOOTER ===== */}
-      <footer id="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">
+      <footer id="contact" data-section="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] opacity-60">{t.contact.kicker}</p>

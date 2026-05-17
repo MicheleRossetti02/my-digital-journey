@@ -51,7 +51,7 @@ function formatDuration(ms: number): string {
 
 type TabKey = "panoramica" | "sezioni" | "heatmap" | "dettagli";
 
-export default function AnalyticsPage() {
+function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("panoramica");
 
   const [summary, setSummary] = useState<Summary | null>(null);
