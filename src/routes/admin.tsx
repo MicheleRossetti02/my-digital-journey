@@ -38,6 +38,7 @@ function AdminLayout() {
     { to: "/admin", label: "Profilo", exact: true },
     { to: "/admin/sections", label: "Sezioni" },
     { to: "/admin/github", label: "GitHub" },
+    { to: "/admin/analytics", label: "Analytics" },
     { to: "/admin/messages", label: "Messaggi" },
     { to: "/admin/account", label: "Account" },
   ];
