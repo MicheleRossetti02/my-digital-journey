@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createServerFn } from "@tanstack/react-start";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/admin/messages")({
   component: MessagesPage,
@@ -17,17 +18,39 @@ type Msg = {
   created_at: string;
 };
 
+const getMessagesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { data, error } = await supabaseAdmin
+    .from("contact_messages")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Msg[];
+});
+
+const toggleReadFn = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string; read: boolean } }) => {
+    await supabaseAdmin.from("contact_messages").update({ read: data.read }).eq("id", data.id);
+  });
+
+const deleteMsgFn = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    await supabaseAdmin.from("contact_messages").delete().eq("id", data.id);
+  });
+
 function MessagesPage() {
   const [items, setItems] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("contact_messages")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setItems(data as Msg[]);
+    setError(null);
+    try {
+      const data = await getMessagesFn();
+      setItems(data);
+    } catch (e) {
+      setError((e as Error).message);
+    }
     setLoading(false);
   }
 
@@ -36,13 +59,13 @@ function MessagesPage() {
   }, []);
 
   async function toggleRead(m: Msg) {
-    await supabase.from("contact_messages").update({ read: !m.read }).eq("id", m.id);
+    await toggleReadFn({ data: { id: m.id, read: !m.read } });
     load();
   }
 
   async function remove(m: Msg) {
     if (!confirm(`Eliminare il messaggio di ${m.name}?`)) return;
-    await supabase.from("contact_messages").delete().eq("id", m.id);
+    await deleteMsgFn({ data: { id: m.id } });
     load();
   }
 
@@ -56,6 +79,8 @@ function MessagesPage() {
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
+      ) : error ? (
+        <p className="text-sm text-destructive">Errore: {error}</p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nessun messaggio.</p>
       ) : (
