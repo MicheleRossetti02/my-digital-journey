@@ -114,6 +114,7 @@ export function SkillsSection({
   return (
     <section
       id="skills"
+      data-section="skills"
       className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50"
     >
       <div className="max-w-5xl mx-auto px-6">

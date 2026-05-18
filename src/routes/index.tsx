@@ -8,6 +8,7 @@ import { GitHubProjects } from "@/components/github-projects";
 import { SkillsSection } from "@/components/skills-section";
 import { ContactForm } from "@/components/contact-form";
 import { getPublicSite, type PublicSection } from "@/lib/public-site.functions";
+import { initTracker } from "@/lib/tracker";
 import avatarUrl from "/avatar.jpg?url";
 
 export const Route = createFileRoute("/")({
@@ -426,6 +427,7 @@ function ThemeToggle() {
 // ============================================================
 function Index() {
   useReveal();
+  useEffect(() => { initTracker(); }, []);
 
   const data = Route.useLoaderData();
   const profile = data?.profile;
@@ -459,7 +461,7 @@ function Index() {
   return (
     <main className="min-h-screen">
       {/* ===== HERO ===== */}
-      <header className="relative overflow-hidden">
+      <header data-section="hero" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 opacity-60"
           style={{ background: "radial-gradient(60% 50% at 50% 0%, oklch(0.92 0.04 162 / 0.6), transparent 70%)" }}
         />
@@ -526,7 +528,7 @@ function Index() {
 
       {/* ===== ABOUT ===== */}
       {isVisible("about") && (
-      <section id="about" className="py-24 border-t border-[var(--color-border)]">
+      <section id="about" data-section="about" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.about.kicker}</p>
@@ -545,7 +547,7 @@ function Index() {
       )}
 
       {/* ===== NOW ===== */}
-      <section id="now" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section id="now" data-section="now" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.now.kicker}</p>
@@ -571,7 +573,7 @@ function Index() {
 
       {/* ===== EDUCATION ===== */}
       {isVisible("education") && (
-      <section className="py-24 border-t border-[var(--color-border)]">
+      <section data-section="education" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.education.kicker}</p>
@@ -593,7 +595,7 @@ function Index() {
 
       {/* ===== EXPERIENCES ===== */}
       {isVisible("experiences") && (
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="experiences" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.experiences.kicker}</p>
@@ -617,7 +619,7 @@ function Index() {
 
       {/* ===== PROJECTS ===== */}
       {isVisible("projects") && (
-      <section id="projects" className="py-24 border-t border-[var(--color-border)]">
+      <section id="projects" data-section="projects" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -674,7 +676,7 @@ function Index() {
       )}
 
       {/* ===== LOOKING FOR ===== */}
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="looking" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.looking.kicker}</p>
@@ -699,7 +701,7 @@ function Index() {
       </section>
 
       {/* ===== READING ===== */}
-      <section className="py-24 border-t border-[var(--color-border)]">
+      <section data-section="reading" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.reading.kicker}</p>
@@ -722,7 +724,7 @@ function Index() {
       {skillsSectionDb && skillsSectionDb.items.length > 0 ? (
         <SkillsSection section={skillsSectionDb} lang={lang} />
       ) : (
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="skills" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.skills.kicker}</p>
@@ -754,7 +756,7 @@ function Index() {
       )}
 
       {/* ===== PASSIONS ===== */}
-      <section className="py-24 border-t border-[var(--color-border)]">
+      <section data-section="passions" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.passions.kicker}</p>
@@ -774,7 +776,7 @@ function Index() {
       </section>
 
       {/* ===== GALLERY ===== */}
-      <section className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section data-section="gallery" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-10 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.gallery.kicker}</p>
@@ -793,7 +795,7 @@ function Index() {
       </section>
 
       {/* ===== CONTACT / FOOTER ===== */}
-      <footer id="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">
+      <footer id="contact" data-section="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] opacity-60">{t.contact.kicker}</p>

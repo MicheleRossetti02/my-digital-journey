@@ -29,6 +29,93 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_clicks: {
+        Row: {
+          id: string
+          session_id: string
+          section_key: string
+          x_pct: number
+          y_pct: number
+          target_tag: string | null
+          clicked_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          section_key: string
+          x_pct: number
+          y_pct: number
+          target_tag?: string | null
+          clicked_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          section_key?: string
+          x_pct?: number
+          y_pct?: number
+          target_tag?: string | null
+          clicked_at?: string
+        }
+        Relationships: []
+      }
+      analytics_section_views: {
+        Row: {
+          id: string
+          session_id: string
+          section_key: string
+          duration_ms: number
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          section_key: string
+          duration_ms: number
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          section_key?: string
+          duration_ms?: number
+          viewed_at?: string
+        }
+        Relationships: []
+      }
+      analytics_sessions: {
+        Row: {
+          id: string
+          started_at: string
+          ended_at: string | null
+          duration_ms: number | null
+          referrer: string | null
+          device: string | null
+          language: string | null
+          screen_width: number | null
+        }
+        Insert: {
+          id: string
+          started_at?: string
+          ended_at?: string | null
+          duration_ms?: number | null
+          referrer?: string | null
+          device?: string | null
+          language?: string | null
+          screen_width?: number | null
+        }
+        Update: {
+          id?: string
+          started_at?: string
+          ended_at?: string | null
+          duration_ms?: number | null
+          referrer?: string | null
+          device?: string | null
+          language?: string | null
+          screen_width?: number | null
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
