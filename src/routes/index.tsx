@@ -421,6 +421,9 @@ function ThemeToggle() {
 function Index() {
   useReveal();
   useEffect(() => { initTracker(); }, []);
+
+  const data = Route.useLoaderData();
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash?.replace(/^#/, "");
@@ -433,8 +436,6 @@ function Index() {
     const t = window.setTimeout(tryScroll, 120);
     return () => window.clearTimeout(t);
   }, [data?.sections?.length]);
-
-  const data = Route.useLoaderData();
   const profile = data?.profile;
   const dbSections = useMemo(() => {
     const map = new Map<string, PublicSection>();
@@ -487,8 +488,8 @@ function Index() {
         for (const base in localized) {
           const pair = localized[base];
           mapped[base] = lang === "it"
-            ? (pair.it ?? pair.en ?? "")
-            : (pair.en ?? pair.it ?? "");
+            ? (pair.it || pair.en || "")
+            : (pair.en || pair.it || "");
         }
         return mapped;
       })
