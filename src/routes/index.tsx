@@ -421,6 +421,18 @@ function ThemeToggle() {
 function Index() {
   useReveal();
   useEffect(() => { initTracker(); }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash?.replace(/^#/, "");
+    if (!hash) return;
+    const tryScroll = () => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ block: "start" });
+    };
+    tryScroll();
+    const t = window.setTimeout(tryScroll, 120);
+    return () => window.clearTimeout(t);
+  }, [data?.sections?.length]);
 
   const data = Route.useLoaderData();
   const profile = data?.profile;
@@ -461,14 +473,22 @@ function Index() {
       .map((i) => {
         const d = i.data as Record<string, any>;
         const mapped: Record<string, any> = {};
+        const localized: Record<string, { en?: any; it?: any }> = {};
         for (const k in d) {
           if (k.endsWith("_en") || k.endsWith("_it")) {
             const base = k.slice(0, -3);
-            if (lang === "en" && k.endsWith("_en")) mapped[base] = d[k];
-            if (lang === "it" && k.endsWith("_it")) mapped[base] = d[k];
+            if (!localized[base]) localized[base] = {};
+            if (k.endsWith("_en")) localized[base].en = d[k];
+            if (k.endsWith("_it")) localized[base].it = d[k];
           } else {
             mapped[k] = d[k];
           }
+        }
+        for (const base in localized) {
+          const pair = localized[base];
+          mapped[base] = lang === "it"
+            ? (pair.it ?? pair.en ?? "")
+            : (pair.en ?? pair.it ?? "");
         }
         return mapped;
       })
@@ -613,7 +633,7 @@ function Index() {
 
       {/* ===== EDUCATION ===== */}
       {isVisible("education") && (
-      <section data-section="education" className="py-24 border-t border-[var(--color-border)]">
+      <section id="education" data-section="education" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("education").kicker}</p>
@@ -635,7 +655,7 @@ function Index() {
 
       {/* ===== EXPERIENCES ===== */}
       {isVisible("experiences") && (
-      <section data-section="experiences" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section id="experiences" data-section="experiences" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("experiences").kicker}</p>
@@ -721,7 +741,7 @@ function Index() {
 
       {/* ===== LOOKING FOR ===== */}
       {isVisible("looking") && (
-      <section data-section="looking" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section id="looking" data-section="looking" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("looking").kicker}</p>
@@ -752,7 +772,7 @@ function Index() {
 
       {/* ===== READING ===== */}
       {isVisible("reading") && (
-      <section data-section="reading" className="py-24 border-t border-[var(--color-border)]">
+      <section id="reading" data-section="reading" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("reading").kicker}</p>
@@ -776,7 +796,7 @@ function Index() {
       {skillsSectionDb && skillsSectionDb.items.length > 0 ? (
         <SkillsSection section={skillsSectionDb} lang={lang} />
       ) : (
-      <section data-section="skills" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section id="skills" data-section="skills" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.skills.kicker}</p>
@@ -809,7 +829,7 @@ function Index() {
 
       {/* ===== PASSIONS ===== */}
       {isVisible("passions") && (
-      <section data-section="passions" className="py-24 border-t border-[var(--color-border)]">
+      <section id="passions" data-section="passions" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("passions").kicker}</p>
@@ -831,7 +851,7 @@ function Index() {
 
       {/* ===== GALLERY ===== */}
       {isVisible("gallery") && (
-      <section data-section="gallery" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
+      <section id="gallery" data-section="gallery" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-10 max-w-2xl">
             <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("gallery").kicker}</p>
