@@ -472,7 +472,7 @@ function Index() {
       .sort((a, b) => a.position - b.position)
       .map((i) => {
         const d = i.data as Record<string, any>;
-        const mapped: Record<string, any> = {};
+        const mapped: Record<string, any> = { _id: i.id };
         const localized: Record<string, { en?: any; it?: any }> = {};
         for (const k in d) {
           if (k.endsWith("_en") || k.endsWith("_it")) {
@@ -663,15 +663,21 @@ function Index() {
             <p className="text-sm text-muted-foreground mt-4">{sec("experiences").sub}</p>
           </div>
           <ol className="relative ml-3 md:ml-6 border-l border-[var(--color-border)]">
-            {getItems("experiences", EXPERIENCES[lang]).map((e: any) => (
-              <li key={e.title} className="reveal relative pl-8 md:pl-12 pb-10 last:pb-0">
+            {getItems("experiences", EXPERIENCES[lang]).map((e: any, idx: number) => {
+              const title = e.title || e.role || e.name || e.school || e.org || "Esperienza";
+              const org = e.org || e.organization || e.company || "";
+              const when = e.when || e.period || "";
+              const text = e.text || e.description || e.desc || "";
+              return (
+              <li key={e._id || `${title}-${idx}`} className="reveal relative pl-8 md:pl-12 pb-10 last:pb-0">
                 <span className="absolute -left-[7px] top-1.5 w-3.5 h-3.5 rounded-full bg-[var(--paper)] border-2 border-[var(--accent-hue)]" aria-hidden />
-                <h3 className="font-semibold text-lg">{e.title}</h3>
-                <p className="text-foreground/80 mt-0.5">{e.org}</p>
-                <p className="text-sm text-muted-foreground mt-1">{e.when}</p>
-                <p className="text-foreground/75 mt-3 leading-relaxed">{e.text}</p>
+                <h3 className="font-semibold text-lg">{title}</h3>
+                {org ? <p className="text-foreground/80 mt-0.5">{org}</p> : null}
+                {when ? <p className="text-sm text-muted-foreground mt-1">{when}</p> : null}
+                {text ? <p className="text-foreground/75 mt-3 leading-relaxed">{text}</p> : null}
               </li>
-            ))}
+              );
+            })}
           </ol>
         </div>
       </section>
@@ -837,13 +843,18 @@ function Index() {
             <p className="mt-5 text-foreground/75 leading-relaxed">{sec("passions").sub}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {getItems("passions", PASSIONS[lang]).map((p: any) => (
-              <div key={p.title} className="reveal card-surface">
-                <div className="text-3xl mb-4" aria-hidden>{p.icon}</div>
-                <h3 className="font-semibold mb-2">{p.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{p.text}</p>
+            {getItems("passions", PASSIONS[lang]).map((p: any, idx: number) => {
+              const title = p.title || p.name || "Passione";
+              const text = p.text || p.description || p.desc || "";
+              const icon = p.icon || "✨";
+              return (
+              <div key={p._id || `${title}-${idx}`} className="reveal card-surface">
+                <div className="text-3xl mb-4" aria-hidden>{icon}</div>
+                <h3 className="font-semibold mb-2">{title}</h3>
+                {text ? <p className="text-sm text-muted-foreground leading-relaxed">{text}</p> : null}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
