@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { kvGetSections, kvSetSections, type Section, type SectionItem } from "@/lib/kv.server";
 import { FileUpload } from "@/components/file-upload";
@@ -65,6 +65,7 @@ function SectionEditor() {
   const [allSections, setAllSections] = useState<Section[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState(Date.now());
+  const previewRef = useRef<HTMLIFrameElement | null>(null);
 
   async function load() {
     const data = await getSectionsFn();
@@ -95,9 +96,15 @@ function SectionEditor() {
 
   async function saveItem(item: SectionItem) {
     if (!section) return;
-    const updatedItems = section.items.map((i) => i.id === item.id ? item : i);
-    const updatedSection = { ...section, items: updatedItems };
-    await persistSection(updatedSection);
+    setMsg(null);
+    try {
+      const updatedItems = section.items.map((i) => i.id === item.id ? item : i);
+      const updatedSection = { ...section, items: updatedItems };
+      await persistSection(updatedSection);
+      setMsg("Voce salvata ✓");
+    } catch (e) {
+      setMsg(`Errore: ${(e as Error).message}`);
+    }
   }
 
   async function deleteItem(itemId: string) {
@@ -202,10 +209,24 @@ function SectionEditor() {
         </div>
         <div className="flex-1 bg-muted relative">
           <iframe 
+            ref={previewRef}
             key={timestamp}
             src={`/?t=${timestamp}#${section.section_key}`} 
             className="w-full h-full border-none absolute inset-0"
             title="Anteprima sito"
+            onLoad={() => {
+              try {
+                const frame = previewRef.current;
+                const hash = section.section_key;
+                const doc = frame?.contentDocument;
+                const win = frame?.contentWindow;
+                if (!doc || !win || !hash) return;
+                const target = doc.getElementById(hash);
+                if (target) target.scrollIntoView({ block: "start" });
+              } catch {
+                // no-op
+              }
+            }}
           />
         </div>
       </div>
