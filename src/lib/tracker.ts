@@ -20,6 +20,7 @@ let sessionStart: number;
 const pendingViews: SectionView[] = [];
 const pendingClicks: Click[] = [];
 let flushing = false;
+let trackerInitialized = false;
 
 async function flush() {
   if (flushing) return;
@@ -41,6 +42,8 @@ async function flush() {
 export function initTracker() {
   if (typeof window === "undefined") return;
   if (window.location.pathname.startsWith("/admin")) return;
+  if (trackerInitialized) return;
+  trackerInitialized = true;
 
   sessionId = sessionStorage.getItem("_asid") ?? crypto.randomUUID();
   sessionStorage.setItem("_asid", sessionId);
@@ -106,6 +109,11 @@ export function initTracker() {
     });
   }, { passive: true });
 
+  // Flush periodically to reduce event loss when the tab closes abruptly.
+  const flushTimer = window.setInterval(() => {
+    void flush();
+  }, 15000);
+
   // Flush on hide/unload
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
@@ -131,4 +139,9 @@ export function initTracker() {
     sectionTimers.clear();
     flush();
   });
+
+  // Release timer when page lifecycle is frozen/discarded by the browser.
+  window.addEventListener("pagehide", () => {
+    window.clearInterval(flushTimer);
+  }, { once: true });
 }

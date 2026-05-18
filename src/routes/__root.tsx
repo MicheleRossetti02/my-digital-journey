@@ -111,11 +111,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           sameAs: ["https://www.linkedin.com/in/michele-rossetti-298561263/"],
         }),
       },
-      {
-        src: "https://static.cloudflareinsights.com/beacon.min.js",
-        defer: true,
-        "data-cf-beacon": '{"token": "__CF_ANALYTICS_TOKEN__"}',
-      },
     ],
   }),
   shellComponent: RootShell,

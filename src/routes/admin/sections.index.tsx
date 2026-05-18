@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { kvGetSections, kvSetSections, type Section } from "@/lib/kv.server";
+import { defaultSections } from "@/lib/seed";
 
-export const Route = createFileRoute("/admin/sections")({
+export const Route = createFileRoute("/admin/sections/")({
   component: SectionsList,
 });
 
@@ -57,10 +58,15 @@ function SectionsList() {
   }
 
   async function remove(id: string, key: string) {
-    if (!confirm(`Eliminare la sezione "${key}"? (cancella anche tutte le sue voci)`)) return;
     const updated = sections.filter((s) => s.id !== id);
     setSections(updated);
     await save(updated);
+  }
+
+  async function importSeed() {
+    setLoading(true);
+    await save(defaultSections);
+    await load();
   }
 
   function add() {
@@ -95,7 +101,10 @@ function SectionsList() {
           <h1 className="text-xl font-semibold">Sezioni del sito</h1>
           {msg && <span className="text-xs text-muted-foreground">{msg}</span>}
         </div>
-        <button onClick={add} className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90">+ Nuova sezione</button>
+        <div className="flex gap-2">
+          <button onClick={importSeed} className="rounded-md bg-secondary px-3 py-1.5 text-sm text-secondary-foreground hover:bg-secondary/90">Importa Dati Iniziali</button>
+          <button onClick={add} className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90">+ Nuova sezione</button>
+        </div>
       </div>
       <div className="rounded-lg border border-border divide-y divide-border">
         {sorted.map((s, idx) => (

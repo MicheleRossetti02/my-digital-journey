@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isSupabaseServiceConfigured, supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ContactSchema = z.object({
   name: z.string().min(1).max(200),
@@ -12,6 +12,10 @@ const ContactSchema = z.object({
 export const submitContact = createServerFn({ method: "POST" })
   .inputValidator((input) => ContactSchema.parse(input))
   .handler(async ({ data }) => {
+    if (!isSupabaseServiceConfigured()) {
+      return { ok: false as const, error: "Contatti non configurati al momento. Scrivimi via email diretta." };
+    }
+
     const { error } = await supabaseAdmin.from("contact_messages").insert({
       name: data.name,
       email: data.email,

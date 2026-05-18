@@ -218,14 +218,7 @@ const T = {
 // ============================================================
 // Data (language-aware where it matters)
 // ============================================================
-const HIGHLIGHTS = [
-  "Digital Strategy",
-  "Innovation Management",
-  "FinTech",
-  "Erasmus × 2",
-  "Data & Analytics",
-  "Curious Builder",
-];
+// HIGHLIGHTS are now managed via the "about" section items
 
 const EDUCATION = {
   en: [
@@ -446,6 +439,47 @@ function Index() {
   const [lang, setLang] = useLanguage("en");
 
   const t = T[lang];
+
+  // Dynamic Content Helpers
+  const sec = (key: string) => {
+    const s = dbSections.get(key);
+    const fallback = (t as any)[key] || {};
+    return {
+      kicker: (lang === "it" ? s?.kicker_it : s?.kicker_en) || fallback.kicker,
+      title: (lang === "it" ? s?.title_it : s?.title_en) || fallback.title,
+      sub: (lang === "it" ? s?.subtitle_it : s?.subtitle_en) || fallback.sub,
+      body: (lang === "it" ? s?.body_it : s?.body_en) || fallback.body,
+    };
+  };
+
+  const getItems = (key: string, fallback: any[]) => {
+    const s = dbSections.get(key);
+    if (!s || !s.items || s.items.length === 0) return fallback;
+    const mappedItems = s.items
+      .filter((i) => i.visible !== false)
+      .sort((a, b) => a.position - b.position)
+      .map((i) => {
+        const d = i.data as Record<string, any>;
+        const mapped: Record<string, any> = {};
+        for (const k in d) {
+          if (k.endsWith("_en") || k.endsWith("_it")) {
+            const base = k.slice(0, -3);
+            if (lang === "en" && k.endsWith("_en")) mapped[base] = d[k];
+            if (lang === "it" && k.endsWith("_it")) mapped[base] = d[k];
+          } else {
+            mapped[k] = d[k];
+          }
+        }
+        return mapped;
+      })
+      .filter(mapped => {
+        // Only keep items that have at least some visible content
+        return mapped.title || mapped.text || mapped.school || mapped.org || mapped.src || mapped.name || mapped.group || mapped.category || mapped.icon;
+      });
+
+    return mappedItems.length > 0 ? mappedItems : fallback;
+  };
+
   const dbTyping = lang === "it" ? profile?.typing_it : profile?.typing_en;
   const typingSource =
     dbTyping && dbTyping.length > 0 ? dbTyping : (t.hero.typing as unknown as string[]);
@@ -531,14 +565,18 @@ function Index() {
       <section id="about" data-section="about" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.about.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.about.title}</h2>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("about").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("about").title}</h2>
           </div>
           <div className="reveal space-y-6">
-            <p className="text-lg leading-relaxed text-foreground/85">{t.about.body}</p>
+            <p className="text-lg leading-relaxed text-foreground/85">{sec("about").body}</p>
             <div className="flex flex-wrap gap-2">
-              {HIGHLIGHTS.map((h) => (
-                <span key={h} className="pill">{h}</span>
+              {(dbSections.get("about")?.items.length ? getItems("about", []) : [
+                { text: "Digital Strategy" }, { text: "Innovation Management" },
+                { text: "FinTech" }, { text: "Erasmus × 2" },
+                { text: "Data & Analytics" }, { text: "Curious Builder" }
+              ]).map((item: any) => (
+                <span key={item.text || item.title} className="pill">{item.text || item.title}</span>
               ))}
             </div>
           </div>
@@ -547,13 +585,14 @@ function Index() {
       )}
 
       {/* ===== NOW ===== */}
+      {isVisible("now") && (
       <section id="now" data-section="now" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.now.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.now.title}</h2>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("now").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("now").title}</h2>
             <p className="text-sm text-muted-foreground mt-4">
-              {t.now.sub}{" "}
+              {sec("now").sub}{" "}
               <a href="https://nownownow.com" target="_blank" rel="noopener noreferrer"
                 className="underline underline-offset-2 hover:text-[var(--accent-hue)]">
                 nownownow.com
@@ -561,26 +600,27 @@ function Index() {
             </p>
           </div>
           <ul className="reveal space-y-4">
-            {t.now.items.map((item) => (
-              <li key={item} className="flex gap-4 items-start">
+            {(dbSections.get("now")?.items.length ? getItems("now", []) : t.now.items.map((text: string) => ({ text }))).map((item: any) => (
+              <li key={item.text} className="flex gap-4 items-start">
                 <span className="mt-2 w-2 h-2 rounded-full bg-[var(--accent-hue)] shrink-0" aria-hidden />
-                <span className="text-lg text-foreground/85">{item}</span>
+                <span className="text-lg text-foreground/85">{item.text}</span>
               </li>
             ))}
           </ul>
         </div>
       </section>
+      )}
 
       {/* ===== EDUCATION ===== */}
       {isVisible("education") && (
       <section data-section="education" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.education.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.education.title}</h2>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("education").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("education").title}</h2>
           </div>
           <ol className="relative ml-3 md:ml-6 border-l border-[var(--color-border)]">
-            {EDUCATION[lang].map((e) => (
+            {getItems("education", EDUCATION[lang]).map((e: any) => (
               <li key={e.school} className="reveal relative pl-8 md:pl-12 pb-10 last:pb-0">
                 <span className="absolute -left-[7px] top-1.5 w-3.5 h-3.5 rounded-full bg-[var(--paper)] border-2 border-[var(--accent-hue)]" aria-hidden />
                 <h3 className="font-semibold text-lg">{e.school}</h3>
@@ -598,12 +638,12 @@ function Index() {
       <section data-section="experiences" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.experiences.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.experiences.title}</h2>
-            <p className="text-sm text-muted-foreground mt-4">{t.experiences.sub}</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("experiences").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("experiences").title}</h2>
+            <p className="text-sm text-muted-foreground mt-4">{sec("experiences").sub}</p>
           </div>
           <ol className="relative ml-3 md:ml-6 border-l border-[var(--color-border)]">
-            {EXPERIENCES[lang].map((e) => (
+            {getItems("experiences", EXPERIENCES[lang]).map((e: any) => (
               <li key={e.title} className="reveal relative pl-8 md:pl-12 pb-10 last:pb-0">
                 <span className="absolute -left-[7px] top-1.5 w-3.5 h-3.5 rounded-full bg-[var(--paper)] border-2 border-[var(--accent-hue)]" aria-hidden />
                 <h3 className="font-semibold text-lg">{e.title}</h3>
@@ -623,20 +663,24 @@ function Index() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.projects.kicker}</p>
-              <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.projects.title}</h2>
-              <p className="text-sm text-muted-foreground mt-3 max-w-lg">{t.projects.sub}</p>
+              <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("projects").kicker}</p>
+              <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("projects").title}</h2>
+              <p className="text-sm text-muted-foreground mt-3 max-w-lg">{sec("projects").sub}</p>
             </div>
-            <p className="text-sm text-muted-foreground max-w-sm">{t.projects.sub2}</p>
+            <p className="text-sm text-muted-foreground max-w-sm">{sec("projects").body}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mb-14">
-            {CASE_STUDIES[lang].map((c) => (
+            {getItems("projects", CASE_STUDIES[lang]).map((c: any) => (
               <a key={c.title} href={c.href} target="_blank" rel="noopener noreferrer"
                 className="reveal card-surface group flex flex-col !p-0 overflow-hidden">
-                <div className="aspect-[16/10] overflow-hidden bg-[var(--cream)] border-b border-[var(--color-border)]">
-                  <img src={c.image} alt={`${c.title} screenshot`} loading="lazy"
-                    className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500" />
+                <div className="aspect-[16/10] overflow-hidden bg-[var(--cream)] border-b border-[var(--color-border)] relative">
+                  {c.image ? (
+                    <img src={c.image} alt={`${c.title} screenshot`} loading="lazy"
+                      className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">Anteprima non disponibile</div>
+                  )}
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-3">
@@ -644,10 +688,10 @@ function Index() {
                     <span className="text-muted-foreground group-hover:text-[var(--accent-hue)] transition-colors" aria-hidden>↗</span>
                   </div>
                   <h3 className="font-serif text-2xl">{c.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{c.description}</p>
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{c.desc || c.description}</p>
                   <p className="text-xs text-foreground/60 mt-4">{c.role}</p>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {c.stack.map((s) => (
+                    {(c.stack || []).map((s: string) => (
                       <span key={s} className="pill text-xs">{s}</span>
                     ))}
                   </div>
@@ -676,21 +720,26 @@ function Index() {
       )}
 
       {/* ===== LOOKING FOR ===== */}
+      {isVisible("looking") && (
       <section data-section="looking" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-[1fr_2fr] gap-12">
           <div className="reveal">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.looking.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.looking.title}</h2>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("looking").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("looking").title}</h2>
           </div>
           <div className="reveal space-y-6">
             <p className="text-lg leading-relaxed text-foreground/85">
-              {t.looking.bodyA}
-              <span className="text-[var(--accent-hue)] font-medium">{t.looking.bodyHL}</span>
-              {t.looking.bodyB}
+              {sec("looking").body || (
+                <>
+                  {t.looking.bodyA}
+                  <span className="text-[var(--accent-hue)] font-medium">{t.looking.bodyHL}</span>
+                  {t.looking.bodyB}
+                </>
+              )}
             </p>
             <figure className="border-l-2 border-[var(--accent-hue)] pl-5 py-1">
               <blockquote className="font-serif text-xl md:text-2xl italic leading-snug text-foreground/90">
-                "{t.looking.quote}"
+                "{sec("looking").sub || t.looking.quote}"
               </blockquote>
               <figcaption className="mt-3 text-sm text-muted-foreground">
                 {t.looking.quoteTr}<em>{t.looking.quoteSrc}</em>
@@ -699,26 +748,29 @@ function Index() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== READING ===== */}
+      {isVisible("reading") && (
       <section data-section="reading" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-12 max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.reading.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.reading.title}</h2>
-            <p className="text-sm text-muted-foreground mt-4">{t.reading.sub}</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("reading").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("reading").title}</h2>
+            <p className="text-sm text-muted-foreground mt-4">{sec("reading").sub}</p>
           </div>
           <ul className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {READING[lang].map((r) => (
+            {getItems("reading", READING[lang]).map((r: any) => (
               <li key={r.title} className="reveal card-surface">
                 <span className="text-xs uppercase tracking-wider text-[var(--accent-hue)] font-medium">{r.tag}</span>
                 <h3 className="font-serif text-xl mt-2 leading-tight">{r.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{r.author}</p>
+                <p className="text-sm text-muted-foreground mt-1">{r.author || r.org}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
+      )}
 
       {/* ===== SKILLS (new no-bars design from DB) ===== */}
       {skillsSectionDb && skillsSectionDb.items.length > 0 ? (
@@ -756,15 +808,16 @@ function Index() {
       )}
 
       {/* ===== PASSIONS ===== */}
+      {isVisible("passions") && (
       <section data-section="passions" className="py-24 border-t border-[var(--color-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-14 max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.passions.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.passions.title}</h2>
-            <p className="mt-5 text-foreground/75 leading-relaxed">{t.passions.sub}</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("passions").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("passions").title}</h2>
+            <p className="mt-5 text-foreground/75 leading-relaxed">{sec("passions").sub}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {PASSIONS[lang].map((p) => (
+            {getItems("passions", PASSIONS[lang]).map((p: any) => (
               <div key={p.title} className="reveal card-surface">
                 <div className="text-3xl mb-4" aria-hidden>{p.icon}</div>
                 <h3 className="font-semibold mb-2">{p.title}</h3>
@@ -774,25 +827,32 @@ function Index() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== GALLERY ===== */}
+      {isVisible("gallery") && (
       <section data-section="gallery" className="py-24 border-t border-[var(--color-border)] bg-[var(--cream)]/50">
         <div className="max-w-5xl mx-auto px-6">
           <div className="reveal mb-10 max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{t.gallery.kicker}</p>
-            <h2 className="font-serif text-4xl md:text-5xl mt-3">{t.gallery.title}</h2>
-            <p className="text-sm text-muted-foreground mt-4">{t.gallery.sub}</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{sec("gallery").kicker}</p>
+            <h2 className="font-serif text-4xl md:text-5xl mt-3">{sec("gallery").title}</h2>
+            <p className="text-sm text-muted-foreground mt-4">{sec("gallery").sub}</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {GALLERY.map((g) => (
-              <figure key={g.src} className="reveal aspect-square overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--cream)]">
-                <img src={g.src} alt={g.alt} loading="lazy"
-                  className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-500" />
+            {getItems("gallery", GALLERY).map((g: any, idx: number) => (
+              <figure key={g.src || idx} className="reveal aspect-square overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--cream)]">
+                {g.src ? (
+                  <img src={g.src} alt={g.alt || g.caption} loading="lazy"
+                    className="w-full h-full object-cover hover:scale-[1.04] transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground p-2 text-center">Nessuna Immagine</div>
+                )}
               </figure>
             ))}
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== CONTACT / FOOTER ===== */}
       <footer id="contact" data-section="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">

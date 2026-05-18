@@ -49,7 +49,7 @@ export type PublicSiteData = {
   sections: PublicSection[];
 };
 
-export const getPublicSite = createServerFn({ method: "GET" }).handler(
+export const getPublicSite = createServerFn({ method: "POST" }).handler(
   async (): Promise<PublicSiteData> => {
     const [profile, sections] = await Promise.all([
       kvGetProfile(),

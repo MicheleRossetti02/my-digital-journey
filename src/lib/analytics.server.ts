@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isSupabaseServiceConfigured, supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Types
 type SessionPayload = {
@@ -27,6 +27,7 @@ type ClickPayload = {
 // Recording
 export const recordSessionFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: SessionPayload }) => {
+    if (!isSupabaseServiceConfigured()) return;
     await supabaseAdmin.from("analytics_sessions").upsert({
       id: data.id,
       referrer: data.referrer,
@@ -38,6 +39,7 @@ export const recordSessionFn = createServerFn({ method: "POST" })
 
 export const flushSessionFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string; duration_ms: number } }) => {
+    if (!isSupabaseServiceConfigured()) return;
     await supabaseAdmin.from("analytics_sessions").update({
       ended_at: new Date().toISOString(),
       duration_ms: data.duration_ms,
@@ -46,6 +48,7 @@ export const flushSessionFn = createServerFn({ method: "POST" })
 
 export const recordSectionViewsFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: SectionViewPayload[] }) => {
+    if (!isSupabaseServiceConfigured()) return;
     if (!data.length) return;
     await supabaseAdmin.from("analytics_section_views").insert(
       data.map((v) => ({
@@ -58,6 +61,7 @@ export const recordSectionViewsFn = createServerFn({ method: "POST" })
 
 export const recordClicksFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: ClickPayload[] }) => {
+    if (!isSupabaseServiceConfigured()) return;
     if (!data.length) return;
     await supabaseAdmin.from("analytics_clicks").insert(
       data.map((c) => ({
@@ -72,6 +76,9 @@ export const recordClicksFn = createServerFn({ method: "POST" })
 
 // Querying (admin dashboard)
 export const getAnalyticsSummaryFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!isSupabaseServiceConfigured()) {
+    return { totalSessions: 0, totalClicks: 0, avgDuration: 0, deviceMap: {} as Record<string, number> };
+  }
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const [sessions, clicks, avgDur] = await Promise.all([
@@ -96,6 +103,7 @@ export const getAnalyticsSummaryFn = createServerFn({ method: "GET" }).handler(a
 });
 
 export const getSessionsOverTimeFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!isSupabaseServiceConfigured()) return [] as { date: string; sessions: number }[];
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data } = await supabaseAdmin
     .from("analytics_sessions")
@@ -121,6 +129,7 @@ export const getSessionsOverTimeFn = createServerFn({ method: "GET" }).handler(a
 });
 
 export const getSectionEngagementFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!isSupabaseServiceConfigured()) return [] as { section: string; avgSeconds: number; views: number }[];
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data } = await supabaseAdmin
     .from("analytics_section_views")
@@ -143,6 +152,7 @@ export const getSectionEngagementFn = createServerFn({ method: "GET" }).handler(
 });
 
 export const getClickHeatmapFn = createServerFn({ method: "GET" }).handler(async ({ data }: { data: { section: string } }) => {
+  if (!isSupabaseServiceConfigured()) return [] as { x_pct: number; y_pct: number; target_tag: string }[];
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data: rows } = await supabaseAdmin
     .from("analytics_clicks")

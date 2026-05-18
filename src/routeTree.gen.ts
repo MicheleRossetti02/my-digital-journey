@@ -14,10 +14,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as AdminSectionsRouteImport } from './routes/admin/sections'
 import { Route as AdminMessagesRouteImport } from './routes/admin/messages'
 import { Route as AdminGithubRouteImport } from './routes/admin/github'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
+import { Route as AdminSectionsIndexRouteImport } from './routes/admin/sections.index'
 import { Route as AdminSectionsIdRouteImport } from './routes/admin/sections.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -45,11 +46,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSectionsRoute = AdminSectionsRouteImport.update({
-  id: '/sections',
-  path: '/sections',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminMessagesRoute = AdminMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -60,15 +56,25 @@ const AdminGithubRoute = AdminGithubRouteImport.update({
   path: '/github',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAccountRoute = AdminAccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSectionsIndexRoute = AdminSectionsIndexRouteImport.update({
+  id: '/sections/',
+  path: '/sections/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSectionsIdRoute = AdminSectionsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminSectionsRoute,
+  id: '/sections/$id',
+  path: '/sections/$id',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -77,22 +83,24 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/github': typeof AdminGithubRoute
   '/admin/messages': typeof AdminMessagesRoute
-  '/admin/sections': typeof AdminSectionsRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/sections/$id': typeof AdminSectionsIdRoute
+  '/admin/sections/': typeof AdminSectionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/github': typeof AdminGithubRoute
   '/admin/messages': typeof AdminMessagesRoute
-  '/admin/sections': typeof AdminSectionsRouteWithChildren
   '/admin': typeof AdminIndexRoute
   '/admin/sections/$id': typeof AdminSectionsIdRoute
+  '/admin/sections': typeof AdminSectionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -101,11 +109,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/github': typeof AdminGithubRoute
   '/admin/messages': typeof AdminMessagesRoute
-  '/admin/sections': typeof AdminSectionsRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/admin/sections/$id': typeof AdminSectionsIdRoute
+  '/admin/sections/': typeof AdminSectionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,22 +124,24 @@ export interface FileRouteTypes {
     | '/login'
     | '/sitemap.xml'
     | '/admin/account'
+    | '/admin/analytics'
     | '/admin/github'
     | '/admin/messages'
-    | '/admin/sections'
     | '/admin/'
     | '/admin/sections/$id'
+    | '/admin/sections/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/sitemap.xml'
     | '/admin/account'
+    | '/admin/analytics'
     | '/admin/github'
     | '/admin/messages'
-    | '/admin/sections'
     | '/admin'
     | '/admin/sections/$id'
+    | '/admin/sections'
   id:
     | '__root__'
     | '/'
@@ -138,11 +149,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/sitemap.xml'
     | '/admin/account'
+    | '/admin/analytics'
     | '/admin/github'
     | '/admin/messages'
-    | '/admin/sections'
     | '/admin/'
     | '/admin/sections/$id'
+    | '/admin/sections/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,13 +201,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/sections': {
-      id: '/admin/sections'
-      path: '/sections'
-      fullPath: '/admin/sections'
-      preLoaderRoute: typeof AdminSectionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/messages': {
       id: '/admin/messages'
       path: '/messages'
@@ -210,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGithubRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/account': {
       id: '/admin/account'
       path: '/account'
@@ -217,42 +229,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAccountRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/sections/': {
+      id: '/admin/sections/'
+      path: '/sections'
+      fullPath: '/admin/sections/'
+      preLoaderRoute: typeof AdminSectionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/sections/$id': {
       id: '/admin/sections/$id'
-      path: '/$id'
+      path: '/sections/$id'
       fullPath: '/admin/sections/$id'
       preLoaderRoute: typeof AdminSectionsIdRouteImport
-      parentRoute: typeof AdminSectionsRoute
+      parentRoute: typeof AdminRoute
     }
   }
 }
 
-interface AdminSectionsRouteChildren {
-  AdminSectionsIdRoute: typeof AdminSectionsIdRoute
-}
-
-const AdminSectionsRouteChildren: AdminSectionsRouteChildren = {
-  AdminSectionsIdRoute: AdminSectionsIdRoute,
-}
-
-const AdminSectionsRouteWithChildren = AdminSectionsRoute._addFileChildren(
-  AdminSectionsRouteChildren,
-)
-
 interface AdminRouteChildren {
   AdminAccountRoute: typeof AdminAccountRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminGithubRoute: typeof AdminGithubRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
-  AdminSectionsRoute: typeof AdminSectionsRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminSectionsIdRoute: typeof AdminSectionsIdRoute
+  AdminSectionsIndexRoute: typeof AdminSectionsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAccountRoute: AdminAccountRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminGithubRoute: AdminGithubRoute,
   AdminMessagesRoute: AdminMessagesRoute,
-  AdminSectionsRoute: AdminSectionsRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
+  AdminSectionsIdRoute: AdminSectionsIdRoute,
+  AdminSectionsIndexRoute: AdminSectionsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

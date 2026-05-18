@@ -40,3 +40,26 @@ create index if not exists idx_clicks_at on analytics_clicks(clicked_at);
 alter table analytics_sessions enable row level security;
 alter table analytics_section_views enable row level security;
 alter table analytics_clicks enable row level security;
+
+-- Foreign keys (idempotent)
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'analytics_section_views_session_id_fkey'
+  ) then
+    alter table analytics_section_views
+      add constraint analytics_section_views_session_id_fkey
+      foreign key (session_id) references analytics_sessions(id) on delete cascade;
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'analytics_clicks_session_id_fkey'
+  ) then
+    alter table analytics_clicks
+      add constraint analytics_clicks_session_id_fkey
+      foreign key (session_id) references analytics_sessions(id) on delete cascade;
+  end if;
+end $$;

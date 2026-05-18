@@ -31,6 +31,7 @@ type Summary = {
   totalClicks: number;
   avgDuration: number;
   deviceMap: Record<string, number>;
+  disabled?: boolean;
 };
 
 type SessionsOverTime = { date: string; sessions: number }[];
@@ -114,6 +115,11 @@ function AnalyticsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Analytics</h1>
         <p className="text-sm text-muted-foreground mt-1">Ultimi 30 giorni</p>
+        {summary && summary.totalSessions === 0 && summary.totalClicks === 0 && Object.keys(summary.deviceMap ?? {}).length === 0 && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Nessun tracciamento attivo in questo ambiente (Supabase non configurato oppure nessun dato raccolto).
+          </p>
+        )}
       </div>
 
       {/* Tab bar */}

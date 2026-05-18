@@ -11,6 +11,8 @@ type CFEnv = {
   [key: string]: unknown;
 };
 
+import { Buffer } from "node:buffer";
+
 /** Maximum upload size: 8 MB */
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -20,8 +22,8 @@ const MAX_BYTES = 8 * 1024 * 1024;
 async function handleFileServe(key: string, kv: KVNamespace): Promise<Response> {
   const record = await kv.get<{ mimeType: string; base64: string }>(`file:${key}`, { type: "json" });
   if (!record) return new Response("Not found", { status: 404 });
-  const bytes = Uint8Array.from(atob(record.base64), (c) => c.charCodeAt(0));
-  return new Response(bytes, {
+  const buffer = Buffer.from(record.base64, "base64");
+  return new Response(buffer, {
     headers: {
       "Content-Type": record.mimeType,
       "Cache-Control": "public, max-age=31536000, immutable",
@@ -34,27 +36,35 @@ async function handleFileServe(key: string, kv: KVNamespace): Promise<Response> 
  * Expects multipart/form-data with a "file" field.
  */
 async function handleFileUpload(request: Request, kv: KVNamespace): Promise<Response> {
-  // Auth check: must have admin_session cookie
-  const cookie = request.headers.get("cookie") ?? "";
-  if (!cookie.includes("admin_session=")) {
-    return new Response("Unauthorized", { status: 401 });
+  try {
+    // Auth check: must have admin_session cookie
+    const cookie = request.headers.get("cookie") ?? "";
+    if (!cookie.includes("admin_session=")) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    if (!file || typeof file === "string") {
+      return new Response("No file", { status: 400 });
+    }
+    if (file.size > MAX_BYTES) {
+      return new Response("File too large (max 8 MB)", { status: 413 });
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Fast and safe base64 conversion using Node.js Buffer
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const key = `${Date.now()}-${safeName}`;
+    await kv.put(`file:${key}`, JSON.stringify({ mimeType: file.type || "application/octet-stream", base64 }));
+    return new Response(JSON.stringify({ url: `/api/file/${key}` }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("Upload error:", err);
+    return new Response(String((err as Error).message), { status: 500 });
   }
-  const formData = await request.formData();
-  const file = formData.get("file") as File | null;
-  if (!file || typeof file === "string") {
-    return new Response("No file", { status: 400 });
-  }
-  if (file.size > MAX_BYTES) {
-    return new Response("File too large (max 8 MB)", { status: 413 });
-  }
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const key = `${Date.now()}-${safeName}`;
-  await kv.put(`file:${key}`, JSON.stringify({ mimeType: file.type || "application/octet-stream", base64 }));
-  return new Response(JSON.stringify({ url: `/api/file/${key}` }), {
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 type ServerEntry = {

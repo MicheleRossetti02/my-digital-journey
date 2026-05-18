@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isSupabaseServiceConfigured, supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/admin/messages")({
   component: MessagesPage,
@@ -19,21 +19,24 @@ type Msg = {
 };
 
 const getMessagesFn = createServerFn({ method: "GET" }).handler(async () => {
+  if (!isSupabaseServiceConfigured()) return { enabled: false as const, items: [] as Msg[] };
   const { data, error } = await supabaseAdmin
     .from("contact_messages")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []) as Msg[];
+  return { enabled: true as const, items: (data ?? []) as Msg[] };
 });
 
 const toggleReadFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string; read: boolean } }) => {
+    if (!isSupabaseServiceConfigured()) return;
     await supabaseAdmin.from("contact_messages").update({ read: data.read }).eq("id", data.id);
   });
 
 const deleteMsgFn = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string } }) => {
+    if (!isSupabaseServiceConfigured()) return;
     await supabaseAdmin.from("contact_messages").delete().eq("id", data.id);
   });
 
@@ -41,13 +44,15 @@ function MessagesPage() {
   const [items, setItems] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enabled, setEnabled] = useState(true);
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
       const data = await getMessagesFn();
-      setItems(data);
+      setEnabled(data.enabled);
+      setItems(data.items);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -79,6 +84,8 @@ function MessagesPage() {
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
+      ) : !enabled ? (
+        <p className="text-sm text-muted-foreground">Messaggi disattivati: Supabase non è configurato in questo ambiente.</p>
       ) : error ? (
         <p className="text-sm text-destructive">Errore: {error}</p>
       ) : items.length === 0 ? (
