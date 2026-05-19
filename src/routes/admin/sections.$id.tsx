@@ -115,15 +115,21 @@ function SectionEditor() {
 
   async function addItem() {
     if (!section) return;
-    const maxPos = Math.max(0, ...section.items.map((i) => i.position));
-    const newItem: SectionItem = {
-      id: `item-${Date.now()}`,
-      position: maxPos + 10,
-      visible: true,
-      data: templateFor(section.section_type),
-    };
-    const updatedSection = { ...section, items: [...section.items, newItem] };
-    await persistSection(updatedSection);
+    setMsg(null);
+    try {
+      const maxPos = Math.max(0, ...section.items.map((i) => i.position));
+      const newItem: SectionItem = {
+        id: `item-${Date.now()}`,
+        position: maxPos + 10,
+        visible: false, // start hidden — user fills content, then enables
+        data: templateFor(section.section_type),
+      };
+      const updatedSection = { ...section, items: [...section.items, newItem] };
+      await persistSection(updatedSection);
+      setMsg("Nuova voce aggiunta ✓ — compila i campi e rendi visibile");
+    } catch (e) {
+      setMsg(`Errore: ${(e as Error).message}`);
+    }
   }
 
   async function moveItem(itemId: string, dir: -1 | 1) {

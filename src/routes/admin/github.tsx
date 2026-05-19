@@ -80,6 +80,11 @@ function GitHubAdmin() {
   }
 
   const pinnedSet = new Set(config.pinned);
+  const [search, setSearch] = useState("");
+  const filteredRepos = repos.filter((r) => {
+    const q = search.toLowerCase();
+    return r.name.toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q);
+  });
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -130,13 +135,23 @@ function GitHubAdmin() {
       )}
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">
-            {loading ? "Caricamento…" : repos.length > 0 ? `Repository di ${fetchedUsername} (${repos.length})` : "Nessun repo trovato"}
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold shrink-0">
+            {loading ? "Caricamento…" : repos.length > 0
+              ? `Repository di ${fetchedUsername} (${filteredRepos.length}${search ? `/${repos.length}` : ""})`
+              : "Nessun repo trovato"}
           </h2>
-          {config.pinned.length === 0 && <p className="text-xs text-muted-foreground">Nessun pin → top {config.max} automatici</p>}
+          {config.pinned.length === 0 && <p className="text-xs text-muted-foreground shrink-0">Nessun pin → top {config.max} automatici</p>}
+          {repos.length > 0 && (
+            <input
+              className={`${inp} max-w-xs`}
+              placeholder="Cerca repo…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          )}
         </div>
-        {repos.map((repo) => {
+        {filteredRepos.map((repo) => {
           const isPinned = pinnedSet.has(repo.name);
           const color = (repo.language && languageColors[repo.language]) || "#999";
           return (
