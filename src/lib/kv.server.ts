@@ -109,11 +109,14 @@ function mkSection(
 
 export const DEFAULT_SECTIONS: Section[] = [
   mkSection("about", "about", 10, "About", "Chi sono", "A curious mind, in motion.", "Una mente curiosa, in movimento."),
+  mkSection("now", "now", 15, "Now", "Adesso", "What I'm up to.", "Cosa sto facendo."),
   mkSection("education", "education", 20, "Education", "Formazione", "An education without borders.", "Una formazione senza confini."),
   mkSection("experiences", "experiences", 30, "Experiences", "Esperienze", "Beyond the classroom.", "Oltre l'aula."),
   mkSection("skills", "skills", 40, "Skills", "Competenze", "Soft & hard skills.", "Soft & hard skills."),
   mkSection("projects", "projects", 50, "Projects", "Progetti", "Things I've been building.", "Cose che ho costruito."),
+  mkSection("looking", "looking", 55, "Looking for", "Sto cercando", "Where I want to go next.", "Dove voglio andare."),
   mkSection("passions", "passions", 60, "Beyond the CV", "Oltre il CV", "What keeps me moving.", "Cosa mi tiene in movimento."),
+  mkSection("reading", "reading", 65, "Bookshelf", "Libreria", "What I'm reading & listening to.", "Cosa sto leggendo e ascoltando."),
   mkSection("gallery", "gallery", 70, "Off-screen", "Off-screen", "Outside the laptop.", "Fuori dal laptop."),
 ];
 
@@ -143,7 +146,11 @@ export async function kvGetSections(): Promise<Section[]> {
   try {
     const raw = await kv.get("site:sections");
     if (!raw) return DEFAULT_SECTIONS;
-    return JSON.parse(raw) as Section[];
+    const stored = JSON.parse(raw) as Section[];
+    // Merge: inject any default sections not yet in KV (new sections added over time)
+    const storedKeys = new Set(stored.map((s) => s.section_key));
+    const missing = DEFAULT_SECTIONS.filter((s) => !storedKeys.has(s.section_key));
+    return missing.length > 0 ? [...stored, ...missing] : stored;
   } catch {
     return DEFAULT_SECTIONS;
   }

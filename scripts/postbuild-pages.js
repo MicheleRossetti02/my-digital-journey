@@ -57,7 +57,28 @@ console.log("✅ _worker.js written");
 const routes = {
   version: 1,
   include: ["/*"],
-  exclude: ["/assets/*"],
+  exclude: ["/assets/*", "/sitemap.xml", "/robots.txt"],
 };
 writeFileSync(join(CLIENT_DIR, "_routes.json"), JSON.stringify(routes, null, 2));
 console.log("✅ _routes.json written");
+
+// 5. Write sitemap.xml
+const now = new Date().toISOString().split("T")[0];
+const DOMAIN = "https://rossettimichele.com";
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${DOMAIN}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+writeFileSync(join(CLIENT_DIR, "sitemap.xml"), sitemap);
+console.log("✅ sitemap.xml written");
+
+// 6. Write robots.txt (allow all, point to sitemap)
+const robots = `User-agent: *\nAllow: /\nSitemap: ${DOMAIN}/sitemap.xml\n`;
+writeFileSync(join(CLIENT_DIR, "robots.txt"), robots);
+console.log("✅ robots.txt written");

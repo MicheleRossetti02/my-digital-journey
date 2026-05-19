@@ -34,6 +34,10 @@ function hasRenderableContent(sectionType: string, item: SectionItem): boolean {
       return hasNonEmptyString(d.title_en) || hasNonEmptyString(d.title_it) || hasNonEmptyString(d.text_en) || hasNonEmptyString(d.text_it);
     case "education":
       return hasNonEmptyString(d.school) || hasNonEmptyString(d.program_en) || hasNonEmptyString(d.program_it);
+    case "now":
+      return hasNonEmptyString(d.text_en) || hasNonEmptyString(d.text_it);
+    case "reading":
+      return hasNonEmptyString(d.title) || hasNonEmptyString(d.author);
     default:
       return Object.values(d).some((v) => hasNonEmptyString(v));
   }
@@ -327,6 +331,9 @@ function templateFor(type: string): Record<string, unknown> {
     case "gallery": return { src: "", alt_en: "", alt_it: "", caption_en: "", caption_it: "" };
     case "passions": return { icon: "✨", title_en: "", title_it: "", text_en: "", text_it: "" };
     case "skills": return { category: "soft", group_en: "", group_it: "", name_en: "", name_it: "", level: 3 };
+    case "now": return { text_en: "", text_it: "" };
+    case "reading": return { title: "", author: "", tag_en: "", tag_it: "" };
+    case "looking": return { text_en: "", text_it: "" };
     case "about": return { text_en: "", text_it: "" };
     case "custom": return { text_en: "", text_it: "" };
     default: return { title_en: "", title_it: "", text_en: "", text_it: "" };
