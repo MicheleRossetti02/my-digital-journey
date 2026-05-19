@@ -887,7 +887,7 @@ function Index() {
       )}
 
       {/* ===== CONTACT / FOOTER ===== */}
-      <footer id="contact" data-section="contact" className="py-28 border-t border-[var(--color-border)] bg-[var(--ink)] text-[var(--paper)]">
+      <footer id="contact" data-section="contact" className="py-28 border-t border-[var(--color-border)]" style={{ background: "oklch(0.18 0.01 60)", color: "oklch(0.98 0.008 85)" }}>
         <div className="max-w-5xl mx-auto px-6 text-center">
           <div className="reveal">
             <p className="text-sm uppercase tracking-[0.18em] opacity-60">{t.contact.kicker}</p>
