@@ -52,7 +52,7 @@ async function sendEmailNotification(msg: {
   } else {
     // Brevo (default) — free 300 emails/day, no SDK needed
     // Sender must be verified in Brevo dashboard (use same email as `to`)
-    await fetch("https://api.brevo.com/v3/smtp/email", {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -63,6 +63,10 @@ async function sendEmailNotification(msg: {
         replyTo: { email: msg.email, name: msg.name },
       }),
     });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`Brevo error ${res.status}:`, body);
+    }
   }
 }
 
