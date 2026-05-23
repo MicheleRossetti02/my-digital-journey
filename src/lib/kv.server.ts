@@ -7,7 +7,17 @@ type CFEnv = {
   SITE_KV?: KVNamespace;
   ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;
+  RESEND_API_KEY?: string;
+  NOTIFICATION_EMAIL?: string;
 };
+
+export function getResendApiKey(): string {
+  return getCFEnv().RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? "";
+}
+
+export function getNotificationEmail(): string {
+  return getCFEnv().NOTIFICATION_EMAIL ?? process.env.NOTIFICATION_EMAIL ?? "michelerossetti07@gmail.com";
+}
 
 function getCFEnv(): CFEnv {
   return ((globalThis as Record<string, unknown>).__CF_ENV__ as CFEnv) ?? {};
@@ -160,4 +170,66 @@ export async function kvSetSections(sections: Section[]): Promise<void> {
   const kv = getKV();
   if (!kv) throw new Error("KV binding not available — add SITE_KV to wrangler.jsonc");
   await kv.put("site:sections", JSON.stringify(sections));
+}
+
+// ─── Contact messages ─────────────────────────────────────────────────────────
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+};
+
+const MESSAGES_KEY = "site:messages";
+const MAX_MESSAGES = 200;
+
+export async function kvGetMessages(): Promise<ContactMessage[]> {
+  const kv = getKV();
+  if (!kv) return [];
+  try {
+    const raw = await kv.get(MESSAGES_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as ContactMessage[];
+  } catch {
+    return [];
+  }
+}
+
+export async function kvAddMessage(
+  msg: Omit<ContactMessage, "id" | "read" | "created_at">,
+): Promise<ContactMessage> {
+  const kv = getKV();
+  if (!kv) throw new Error("KV not available");
+  const newMsg: ContactMessage = {
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ...msg,
+    read: false,
+    created_at: new Date().toISOString(),
+  };
+  const existing = await kvGetMessages();
+  const updated = [newMsg, ...existing].slice(0, MAX_MESSAGES);
+  await kv.put(MESSAGES_KEY, JSON.stringify(updated));
+  return newMsg;
+}
+
+export async function kvUpdateMessage(
+  id: string,
+  patch: Partial<Pick<ContactMessage, "read">>,
+): Promise<void> {
+  const kv = getKV();
+  if (!kv) throw new Error("KV not available");
+  const existing = await kvGetMessages();
+  const updated = existing.map((m) => (m.id === id ? { ...m, ...patch } : m));
+  await kv.put(MESSAGES_KEY, JSON.stringify(updated));
+}
+
+export async function kvDeleteMessage(id: string): Promise<void> {
+  const kv = getKV();
+  if (!kv) throw new Error("KV not available");
+  const existing = await kvGetMessages();
+  await kv.put(MESSAGES_KEY, JSON.stringify(existing.filter((m) => m.id !== id)));
 }
