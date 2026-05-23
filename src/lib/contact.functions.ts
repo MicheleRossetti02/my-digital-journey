@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getKV, getResendApiKey, getNotificationEmail, kvAddMessage } from "@/lib/kv.server";
+import { getKV, getMailApiKey, getMailProvider, getNotificationEmail, kvAddMessage } from "@/lib/kv.server";
 
 const ContactSchema = z.object({
   name: z.string().min(1).max(200),
@@ -17,37 +17,53 @@ async function sendEmailNotification(msg: {
   subject: string;
   message: string;
 }): Promise<void> {
-  const apiKey = getResendApiKey();
-  if (!apiKey) return; // email silently skipped if no key configured
+  const apiKey = getMailApiKey();
+  if (!apiKey) return; // silently skip if not configured
 
   const to = getNotificationEmail();
+  const provider = getMailProvider();
   const subjectLine = msg.subject
     ? `[Portfolio] ${msg.subject} — da ${msg.name}`
     : `[Portfolio] Nuovo messaggio da ${msg.name}`;
 
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Portfolio Contact <onboarding@resend.dev>",
-      to: [to],
-      subject: subjectLine,
-      html: `
-        <p><strong>Nome:</strong> ${msg.name}</p>
-        <p><strong>Email:</strong> <a href="mailto:${msg.email}">${msg.email}</a></p>
-        ${msg.subject ? `<p><strong>Oggetto:</strong> ${msg.subject}</p>` : ""}
-        <hr />
-        <p style="white-space:pre-wrap">${msg.message}</p>
-        <hr />
-        <p style="color:#888;font-size:12px">
-          Ricevuto da <a href="https://rossettimichele.com">rossettimichele.com</a>
-        </p>
-      `,
-    }),
-  });
+  const html = `
+    <p><strong>Nome:</strong> ${msg.name}</p>
+    <p><strong>Email:</strong> <a href="mailto:${msg.email}">${msg.email}</a></p>
+    ${msg.subject ? `<p><strong>Oggetto:</strong> ${msg.subject}</p>` : ""}
+    <hr />
+    <p style="white-space:pre-wrap">${msg.message.replace(/</g, "&lt;")}</p>
+    <hr />
+    <p style="color:#888;font-size:12px">
+      Ricevuto da <a href="https://rossettimichele.com">rossettimichele.com</a>
+    </p>
+  `;
+
+  if (provider === "resend") {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Portfolio Contact <onboarding@resend.dev>",
+        to: [to],
+        subject: subjectLine,
+        html,
+      }),
+    });
+  } else {
+    // Brevo (default) — free 300 emails/day, no SDK needed
+    // Sender must be verified in Brevo dashboard (use same email as `to`)
+    await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Portfolio Contact", email: to },
+        to: [{ email: to }],
+        subject: subjectLine,
+        htmlContent: html,
+        replyTo: { email: msg.email, name: msg.name },
+      }),
+    });
+  }
 }
 
 export const submitContact = createServerFn({ method: "POST" })

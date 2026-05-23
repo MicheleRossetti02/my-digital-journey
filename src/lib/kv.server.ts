@@ -7,12 +7,26 @@ type CFEnv = {
   SITE_KV?: KVNamespace;
   ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;
+  BREVO_API_KEY?: string;
   RESEND_API_KEY?: string;
+  MAIL_PROVIDER?: string;
   NOTIFICATION_EMAIL?: string;
 };
 
-export function getResendApiKey(): string {
-  return getCFEnv().RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? "";
+export function getMailApiKey(): string {
+  // supports BREVO_API_KEY or RESEND_API_KEY
+  return (
+    getCFEnv().BREVO_API_KEY ??
+    process.env.BREVO_API_KEY ??
+    getCFEnv().RESEND_API_KEY ??
+    process.env.RESEND_API_KEY ??
+    ""
+  );
+}
+
+export function getMailProvider(): "brevo" | "resend" {
+  const p = (getCFEnv().MAIL_PROVIDER ?? process.env.MAIL_PROVIDER ?? "brevo").toLowerCase();
+  return p === "resend" ? "resend" : "brevo";
 }
 
 export function getNotificationEmail(): string {
