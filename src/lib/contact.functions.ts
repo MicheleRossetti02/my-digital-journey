@@ -104,13 +104,17 @@ export const submitContact = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Errore nel salvataggio. Riprova più tardi." };
     }
 
-    // ── Email notification (non-blocking — don't fail submission) ─
-    sendEmailNotification({
-      name: data.name,
-      email: data.email,
-      subject: data.subject ?? "",
-      message: data.message,
-    }).catch((e) => console.error("sendEmailNotification error", e));
+    // ── Email notification (awaited — CF Workers kill fire-and-forget promises) ─
+    try {
+      await sendEmailNotification({
+        name: data.name,
+        email: data.email,
+        subject: data.subject ?? "",
+        message: data.message,
+      });
+    } catch (e) {
+      console.error("sendEmailNotification error", e);
+    }
 
     return { ok: true as const };
   });
