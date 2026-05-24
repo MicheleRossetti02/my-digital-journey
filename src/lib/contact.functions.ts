@@ -56,7 +56,7 @@ async function sendEmailNotification(msg: {
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Portfolio Contact", email: to },
+        sender: { name: "Portfolio Contact", email: "noreply@rossettimichele.com" },
         to: [{ email: to }],
         subject: subjectLine,
         htmlContent: html,
